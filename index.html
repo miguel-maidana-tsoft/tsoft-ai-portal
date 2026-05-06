@@ -666,6 +666,44 @@
   .nivel-P1 { background: #FEF2F2; color: #DC2626; }
   .nivel-P2 { background: var(--yellow-bg); color: var(--yellow); }
   .nivel-P3 { background: var(--green-bg); color: var(--green); }
+
+  /* ── CHAMPIONS ── */
+  .champions-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .champion-row {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 10px;
+  }
+  .champion-nombre {
+    flex: 1; border: none; background: none; font-family: inherit;
+    font-size: 13px; color: var(--navy); outline: none;
+  }
+  .champion-nombre::placeholder { color: var(--muted); }
+  .champion-rol {
+    border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+    font-size: 12px; font-family: inherit; background: var(--white);
+    color: var(--slate); outline: none; cursor: pointer;
+  }
+  .champion-del {
+    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+    border: none; background: none; color: var(--muted); cursor: pointer;
+    border-radius: 5px; font-size: 13px; transition: all 0.15s; flex-shrink: 0;
+  }
+  .champion-del:hover { background: #FEF2F2; color: var(--red); }
+  .btn-add-champion {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border: 1px dashed var(--border); border-radius: 7px;
+    background: none; color: var(--muted); font-size: 12.5px; font-family: inherit;
+    cursor: pointer; transition: all 0.15s; width: 100%;
+  }
+  .btn-add-champion:hover { border-color: var(--navy); color: var(--navy); background: var(--bg); }
+
+  /* ── SAVE INDICATOR ── */
+  .field-saved {
+    font-size: 11px; color: var(--green); font-weight: 600;
+    opacity: 0; transition: opacity 0.3s; margin-top: 4px;
+  }
+  .field-saved.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -1093,41 +1131,117 @@ function renderFasePanel() {
   `;
 }
 
+const ROLES_CHAMPION = ['Dev Frontend','Dev Backend','QA','PO','PM','Analista Funcional','UX/UI','DevOps','Tech Lead','Otro'];
+
+function parseChampions(val) {
+  if (!val) return [];
+  try { return JSON.parse(val); } catch(e) {
+    // legacy: plain text
+    return val ? [{ nombre: val, rol: 'Otro' }] : [];
+  }
+}
+
+function renderChampionsEditor(champions) {
+  const rows = champions.map((c, i) => `
+    <div class="champion-row" id="champ-row-${i}">
+      <input class="champion-nombre" value="${c.nombre || ''}" placeholder="Nombre del champion"
+        onblur="updateChampion(${i}, 'nombre', this.value)">
+      <select class="champion-rol" onchange="updateChampion(${i}, 'rol', this.value)">
+        ${ROLES_CHAMPION.map(r => `<option ${c.rol === r ? 'selected' : ''}>${r}</option>`).join('')}
+      </select>
+      <button class="champion-del" onclick="removeChampion(${i})" title="Eliminar">✕</button>
+    </div>
+  `).join('');
+  return `
+    <div class="champions-list" id="champions-list">${rows}</div>
+    <button class="btn-add-champion" onclick="addChampion()">+ Agregar champion</button>
+    <div class="field-saved" id="champ-saved">✓ Guardado</div>
+  `;
+}
+
+function updateChampion(idx, field, value) {
+  const cliente = state.currentCliente;
+  const info = state.clientesInfo[cliente] || {};
+  const champions = parseChampions(info.champion);
+  if (champions[idx]) champions[idx][field] = value;
+  saveChampions(champions);
+}
+
+function addChampion() {
+  const cliente = state.currentCliente;
+  const info = state.clientesInfo[cliente] || {};
+  const champions = parseChampions(info.champion);
+  champions.push({ nombre: '', rol: 'Otro' });
+  if (!state.clientesInfo[cliente]) state.clientesInfo[cliente] = {};
+  state.clientesInfo[cliente].champion = JSON.stringify(champions);
+  // Re-render solo el editor de champions
+  const container = document.getElementById('champions-container');
+  if (container) container.innerHTML = renderChampionsEditor(champions);
+}
+
+function removeChampion(idx) {
+  const cliente = state.currentCliente;
+  const info = state.clientesInfo[cliente] || {};
+  const champions = parseChampions(info.champion);
+  champions.splice(idx, 1);
+  saveChampions(champions);
+  const container = document.getElementById('champions-container');
+  if (container) container.innerHTML = renderChampionsEditor(champions);
+}
+
+async function saveChampions(champions) {
+  const cliente = state.currentCliente;
+  if (!state.clientesInfo[cliente]) state.clientesInfo[cliente] = {};
+  const val = JSON.stringify(champions);
+  state.clientesInfo[cliente].champion = val;
+  await apiPost({ action: 'actualizarClienteInfo', cliente, campo: 'champion', valor: val });
+  const el = document.getElementById('champ-saved');
+  if (el) { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2000); }
+}
+
 function renderInfoCliente() {
   const info = (state.clientesInfo[state.currentCliente]) || {};
+  const champions = parseChampions(info.champion);
   return `
     <div class="info-grid">
       <div class="info-field">
         <div class="info-field-label">Gerencia / Vertical</div>
-        <input class="info-field-value" value="${info.gerencia || ''}" placeholder="—" onblur="guardarInfo('gerencia', this.value)">
+        <input class="info-field-value" value="${info.gerencia || ''}" placeholder="—" onblur="guardarInfoConFeedback(this, 'gerencia', this.value)">
+        <div class="field-saved" id="saved-gerencia">✓ Guardado</div>
       </div>
       <div class="info-field">
         <div class="info-field-label">Gerente TSOFT ref.</div>
-        <input class="info-field-value" value="${info.gerente || ''}" placeholder="—" onblur="guardarInfo('gerente', this.value)">
+        <input class="info-field-value" value="${info.gerente || ''}" placeholder="—" onblur="guardarInfoConFeedback(this, 'gerente', this.value)">
+        <div class="field-saved" id="saved-gerente">✓ Guardado</div>
       </div>
-      <div class="info-field">
-        <div class="info-field-label">Champion asignado</div>
-        <input class="info-field-value" value="${info.champion || ''}" placeholder="—" onblur="guardarInfo('champion', this.value)">
+      <div class="info-field full" id="champions-container">
+        <div class="info-field-label">Champions asignados</div>
+        ${renderChampionsEditor(champions)}
       </div>
       <div class="info-field">
         <div class="info-field-label">Nivel C</div>
-        <input class="info-field-value" value="${info.nivelC || ''}" placeholder="C1 / C2 / C3 / C4" onblur="guardarInfo('nivelC', this.value)">
+        <input class="info-field-value" value="${info.nivelC || ''}" placeholder="C1 / C2 / C3 / C4" onblur="guardarInfoConFeedback(this, 'nivelC', this.value)">
+        <div class="field-saved" id="saved-nivelC">✓ Guardado</div>
       </div>
       <div class="info-field">
         <div class="info-field-label">Nivel P actual</div>
-        <input class="info-field-value" value="${info.nivelP || ''}" placeholder="P1 / P2 / P3..." onblur="guardarInfo('nivelP', this.value)">
+        <input class="info-field-value" value="${info.nivelP || ''}" placeholder="P1 / P2 / P3..." onblur="guardarInfoConFeedback(this, 'nivelP', this.value)">
+        <div class="field-saved" id="saved-nivelP">✓ Guardado</div>
       </div>
-      <div class="info-field">
+      <div class="info-field full">
         <div class="info-field-label">Herramientas IA en uso</div>
-        <input class="info-field-value" value="${info.herramientas || ''}" placeholder="—" onblur="guardarInfo('herramientas', this.value)">
+        <input class="info-field-value" value="${info.herramientas || ''}" placeholder="—" onblur="guardarInfoConFeedback(this, 'herramientas', this.value)">
+        <div class="field-saved" id="saved-herramientas">✓ Guardado</div>
       </div>
       <div class="info-field full">
         <div class="info-field-label">Próximo paso</div>
-        <textarea class="info-field-value" rows="2" placeholder="—" onblur="guardarInfo('proximoPaso', this.value)">${info.proximoPaso || ''}</textarea>
+        <textarea class="info-field-value" rows="2" placeholder="—" onblur="guardarInfoConFeedback(this, 'proximoPaso', this.value)">${info.proximoPaso || ''}</textarea>
+        <div class="field-saved" id="saved-proximoPaso">✓ Guardado</div>
       </div>
       <div class="info-field full">
         <div class="info-field-label">Notas clave</div>
-        <textarea class="info-field-value" rows="3" placeholder="—" onblur="guardarInfo('notas', this.value)">${info.notas || ''}</textarea>
+        <textarea class="info-field-value" rows="3" placeholder="—" onblur="guardarInfoConFeedback(this, 'notas', this.value)">${info.notas || ''}</textarea>
+        <div class="field-saved" id="saved-notas">✓ Guardado</div>
       </div>
     </div>
   `;
@@ -1199,6 +1313,15 @@ async function guardarInfo(campo, valor) {
   state.clientesInfo[cliente][campo] = valor;
   await apiPost({ action: 'actualizarClienteInfo', cliente, campo, valor });
   toast('Guardado');
+}
+
+async function guardarInfoConFeedback(inputEl, campo, valor) {
+  const cliente = state.currentCliente;
+  if (!state.clientesInfo[cliente]) state.clientesInfo[cliente] = {};
+  state.clientesInfo[cliente][campo] = valor;
+  await apiPost({ action: 'actualizarClienteInfo', cliente, campo, valor });
+  const saved = document.getElementById('saved-' + campo);
+  if (saved) { saved.classList.add('show'); setTimeout(() => saved.classList.remove('show'), 2000); }
 }
 
 function renderFaseStats() {
