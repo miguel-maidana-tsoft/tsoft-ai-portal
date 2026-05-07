@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { FASES } from '../../constants'
+import { FASES, PLATAFORMA_ID, PLATAFORMA_FASE2_TAREAS } from '../../constants'
 import TareaItem from './TareaItem'
 
 export default function FasePanel({ onToast }) {
-  const { currentCliente, currentFase, tareas, agregarTarea } = useApp()
+  const { currentCliente, currentOla, currentFase, tareas, agregarTarea } = useApp()
   const [nuevaTarea, setNuevaTarea] = useState('')
+  const [seeding, setSeeding] = useState(false)
 
   const fase = FASES.find((f) => f.id === currentFase)
   const listaTareas = (tareas[currentCliente] || {})[currentFase] || []
+  const isPlataforma = currentOla === PLATAFORMA_ID
+  const mostrarSeedBtn = isPlataforma && currentFase === 2 && listaTareas.length === 0
 
   const completadas = listaTareas.filter((t) => t.estado === 'Completado').length
   const enCurso = listaTareas.filter((t) => t.estado === 'En curso').length
@@ -20,6 +23,15 @@ export default function FasePanel({ onToast }) {
     await agregarTarea(texto, currentCliente, currentFase)
     setNuevaTarea('')
     onToast('Tarea agregada')
+  }
+
+  async function handleCargarTareasBase() {
+    setSeeding(true)
+    for (const texto of PLATAFORMA_FASE2_TAREAS) {
+      await agregarTarea(texto, PLATAFORMA_ID, 2)
+    }
+    setSeeding(false)
+    onToast('Tareas base cargadas')
   }
 
   function handleKeyDown(e) {
@@ -45,7 +57,20 @@ export default function FasePanel({ onToast }) {
       <div className="tareas-list">
         {listaTareas.length === 0 ? (
           <div style={{ padding: '20px 22px', color: 'var(--muted)', fontSize: 13 }}>
-            Sin tareas. Agregá la primera abajo.
+            {mostrarSeedBtn ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <span>Esta fase tiene tareas base predefinidas.</span>
+                <button
+                  className="btn-seed"
+                  onClick={handleCargarTareasBase}
+                  disabled={seeding}
+                >
+                  {seeding ? 'Cargando...' : '↓ Cargar tareas base de Fase 2'}
+                </button>
+              </div>
+            ) : (
+              'Sin tareas. Agregá la primera abajo.'
+            )}
           </div>
         ) : (
           listaTareas.map((t) => (

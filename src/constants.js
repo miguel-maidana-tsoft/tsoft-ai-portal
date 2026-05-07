@@ -5,7 +5,7 @@ export const FASES = [
   { id: 1, nombre: 'Fase 1', periodo: 'Semana 1', subtitulo: 'Lanzamiento del programa' },
   { id: 2, nombre: 'Fase 2', periodo: 'Semanas 2–3', subtitulo: 'Champions' },
   { id: 3, nombre: 'Fase 3', periodo: 'Semanas 4–5', subtitulo: 'Todo el equipo' },
-  { id: 4, nombre: 'Fase 4', periodo: 'En curso', subtitulo: 'Consolidación' },
+  { id: 4, nombre: 'Fase 4', periodo: 'Continua', subtitulo: 'Consolidación' },
 ]
 
 export const CLIENTES_OLA1 = [
@@ -16,8 +16,12 @@ export const CLIENTES_OLA1 = [
   'Claro Automatización',
 ]
 
+// Agregar clientes de Ola 2 cuando estén definidos
+export const CLIENTES_OLA2 = []
+
 export const OLAS = [
   { id: 'Ola 1', label: 'OLA 1 — Clientes', clientes: CLIENTES_OLA1 },
+  { id: 'Ola 2', label: 'OLA 2 — Clientes', clientes: CLIENTES_OLA2 },
 ]
 
 export const ROLES_CHAMPION = [
@@ -34,3 +38,15 @@ export const ROLES_CHAMPION = [
 ]
 
 export const ESTADOS = ['Pendiente', 'En curso', 'Completado']
+
+export const PLATAFORMA_ID = 'Plataforma'
+
+// Tareas iniciales de la Plataforma para Fase 2
+// Se auto-seedean en el Sheet la primera vez que se abre esa fase vacía
+export const PLATAFORMA_FASE2_TAREAS = [
+  'Definir herramientas IA a usar en ese cliente',
+  'Definir objetivo de madurez del cliente (a dónde llegar)',
+  'Por proyecto: definir agentes/skills obligatorios',
+  'Por proyecto: definir agentes/skills opcionales',
+  'Definir qué agentes/skills customizar y por qué',
+]

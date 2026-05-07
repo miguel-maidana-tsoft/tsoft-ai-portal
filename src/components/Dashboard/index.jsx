@@ -1,17 +1,48 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { OLAS } from '../../constants'
 import KpiGrid from './KpiGrid'
 import ClienteCard from './ClienteCard'
+import Filtros from './Filtros'
 import Spinner from '../Spinner'
+
+const FILTROS_DEFAULT = { ola: 'todos', avance: 'todos', fase: 'todos' }
+
+function clienteMatchesFiltros(cliente, olaId, resumen, clientesInfo, filtros) {
+  if (filtros.ola !== 'todos' && filtros.ola !== olaId) return false
+
+  const r = resumen[cliente] || {}
+  const pct = r.pct || 0
+  if (filtros.avance === 'sin-empezar' && pct !== 0) return false
+  if (filtros.avance === 'en-progreso' && (pct === 0 || pct === 100)) return false
+  if (filtros.avance === 'completado' && pct !== 100) return false
+
+  if (filtros.fase !== 'todos') {
+    // Si el cliente no tiene faseActual seteado, se asume Fase 1
+    const fa = clientesInfo[cliente]?.faseActual || '1'
+    if (String(fa) !== filtros.fase) return false
+  }
+
+  return true
+}
 
 export default function Dashboard() {
   const { resumen, clientesInfo, loadDashboard } = useApp()
+  const [filtros, setFiltros] = useState(FILTROS_DEFAULT)
   const loaded = Object.keys(resumen).length > 0
 
   useEffect(() => {
     loadDashboard()
   }, [loadDashboard])
+
+  const clientesFiltrados = OLAS.flatMap((o) =>
+    o.clientes
+      .filter((c) => clienteMatchesFiltros(c, o.id, resumen, clientesInfo, filtros))
+      .map((c) => ({ cliente: c, olaId: o.id }))
+  )
+
+  const hayFiltrosActivos =
+    filtros.ola !== 'todos' || filtros.avance !== 'todos' || filtros.fase !== 'todos'
 
   return (
     <div>
@@ -27,16 +58,30 @@ export default function Dashboard() {
       ) : (
         <>
           <KpiGrid resumen={resumen} />
-          <div className="clientes-grid">
-            {OLAS.flatMap((o) => o.clientes).map((cliente) => (
-              <ClienteCard
-                key={cliente}
-                cliente={cliente}
-                resumen={resumen[cliente]}
-                info={clientesInfo[cliente]}
-              />
-            ))}
-          </div>
+          <Filtros filtros={filtros} onChange={setFiltros} />
+
+          {clientesFiltrados.length === 0 ? (
+            <div className="filtros-empty">
+              {filtros.avance === 'completado'
+                ? 'Ningún cliente tiene el 100% de todas las fases completado todavía.'
+                : 'Ningún cliente coincide con los filtros.'}
+              {' '}
+              <button className="filtros-reset" onClick={() => setFiltros(FILTROS_DEFAULT)}>
+                Limpiar filtros
+              </button>
+            </div>
+          ) : (
+            <div className="clientes-grid">
+              {clientesFiltrados.map(({ cliente }) => (
+                <ClienteCard
+                  key={cliente}
+                  cliente={cliente}
+                  resumen={resumen[cliente]}
+                  info={clientesInfo[cliente]}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

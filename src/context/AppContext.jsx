@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { useApi } from '../hooks/useApi'
-import { OLAS } from '../constants'
+import { OLAS, PLATAFORMA_ID } from '../constants'
 
 const AppContext = createContext(null)
 
@@ -13,6 +13,7 @@ export function AppProvider({ children }) {
   const [tareas, setTareas] = useState({})
   const [resumen, setResumen] = useState({})
   const [clientesInfo, setClientesInfo] = useState({})
+  const [assessment, setAssessment] = useState(null) // null = no cargado, [] = cargado vacío
   const [view, setView] = useState('dashboard')
 
   const loadDashboard = useCallback(async () => {
@@ -24,8 +25,9 @@ export function AppProvider({ children }) {
     setClientesInfo(info)
   }, [call])
 
-  const loadTareas = useCallback(async (cliente) => {
-    const data = await call({ action: 'getTareas', ola: currentOla, cliente })
+  const loadTareas = useCallback(async (cliente, ola) => {
+    const olaParam = ola || currentOla
+    const data = await call({ action: 'getTareas', ola: olaParam, cliente })
     setTareas((prev) => ({ ...prev, [cliente]: data }))
   }, [call, currentOla])
 
@@ -44,13 +46,8 @@ export function AppProvider({ children }) {
   }, [call])
 
   const agregarTarea = useCallback(async (texto, cliente, faseId) => {
-    const result = await call({
-      action: 'agregarTarea',
-      ola: currentOla,
-      cliente,
-      faseId,
-      texto,
-    })
+    const ola = cliente === PLATAFORMA_ID ? PLATAFORMA_ID : currentOla
+    const result = await call({ action: 'agregarTarea', ola, cliente, faseId, texto })
     if (result.success) {
       setTareas((prev) => {
         const copia = { ...prev }
@@ -83,10 +80,27 @@ export function AppProvider({ children }) {
     await call({ action: 'actualizarClienteInfo', cliente, campo, valor })
   }, [call])
 
-  const openTracker = useCallback((cliente) => {
+  const openTracker = useCallback((cliente, ola) => {
     setCurrentCliente(cliente)
+    setCurrentOla(ola || OLAS[0].id)
     setCurrentFase(1)
     setView('tracker')
+  }, [])
+
+  const openPlataforma = useCallback(() => {
+    setCurrentCliente(PLATAFORMA_ID)
+    setCurrentOla(PLATAFORMA_ID)
+    setCurrentFase(1)
+    setView('plataforma')
+  }, [])
+
+  const loadAssessment = useCallback(async () => {
+    const data = await call({ action: 'getAssessment' })
+    setAssessment(Array.isArray(data) ? data : [])
+  }, [call])
+
+  const openAssessment = useCallback(() => {
+    setView('assessment')
   }, [])
 
   const goToDashboard = useCallback(() => {
@@ -99,15 +113,18 @@ export function AppProvider({ children }) {
         currentOla, setCurrentOla,
         currentCliente, setCurrentCliente,
         currentFase, setCurrentFase,
-        tareas, resumen, clientesInfo,
+        tareas, resumen, clientesInfo, assessment,
         view,
         loadDashboard,
         loadTareas,
+        loadAssessment,
         actualizarEstado,
         agregarTarea,
         eliminarTarea,
         actualizarClienteInfo,
         openTracker,
+        openPlataforma,
+        openAssessment,
         goToDashboard,
       }}
     >

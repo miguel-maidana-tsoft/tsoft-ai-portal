@@ -38,7 +38,10 @@ function jsonp(params) {
   })
 }
 
+// Referencia estable a nivel de módulo — evita que useCallback en AppContext
+// se recree en cada render y dispare loops infinitos en useEffect
+const call = (params) => jsonp(params)
+
 export function useApi() {
-  const call = (params) => jsonp(params)
   return { call }
 }
