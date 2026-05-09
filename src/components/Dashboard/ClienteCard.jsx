@@ -1,5 +1,10 @@
 import { useApp } from '../../context/AppContext'
 
+function parseChampions(val) {
+  if (!val) return []
+  try { return JSON.parse(val) } catch { return [] }
+}
+
 export default function ClienteCard({ cliente, resumen, info }) {
   const { openTracker } = useApp()
   const r = resumen || { total: 0, completadas: 0, enCurso: 0, pendientes: 0, pct: 0 }
@@ -8,6 +13,7 @@ export default function ClienteCard({ cliente, resumen, info }) {
 
   const nivelCBase = info?.nivelC?.split('–')[0].replace(/[^CP0-9]/g, '')
   const nivelPBase = info?.nivelP?.split(' ')[0].replace(/[^CP0-9]/g, '')
+  const champions = parseChampions(info?.champion).filter(c => c.nombre)
 
   return (
     <div className="cliente-card" onClick={() => openTracker(cliente)}>
@@ -15,7 +21,7 @@ export default function ClienteCard({ cliente, resumen, info }) {
         <div>
           <div className="cliente-name">{cliente}</div>
           <div className="cliente-gerente">
-            {info?.gerente ? `👤 ${info.gerente}` : 'Sin gerente asignado'}
+            <span className="card-info-label">Líder:</span> {info?.lider || 'Sin asignar'}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
@@ -27,6 +33,20 @@ export default function ClienteCard({ cliente, resumen, info }) {
           )}
         </div>
       </div>
+
+      {champions.length > 0 && (
+        <div className="card-champions">
+          <div className="card-info-label" style={{ marginBottom: 5 }}>Champions:</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {champions.map((c, i) => (
+              <span key={i} className="card-champion-tag">
+                {c.nombre}
+                {c.rol && c.rol !== 'Otro' && <span className="card-champion-rol"> · {c.rol}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="progress-bar-wrap">
         <div

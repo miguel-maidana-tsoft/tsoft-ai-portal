@@ -1,8 +1,8 @@
 import { useApp } from '../context/AppContext'
-import { OLAS, FASES, PLATAFORMA_ID } from '../constants'
+import { OLAS, FASES, PLATAFORMA_ID, TABLERO_ID } from '../constants'
 
 export default function Sidebar({ open, onClose }) {
-  const { view, currentCliente, clientesInfo, openTracker, openPlataforma, openAssessment, goToDashboard } = useApp()
+  const { view, currentCliente, clientesInfo, openTracker, openPlataforma, openTablero, openAssessment, goToDashboard } = useApp()
 
   function getFaseLabel(cliente) {
     const fa = clientesInfo[cliente]?.faseActual
@@ -26,6 +26,11 @@ export default function Sidebar({ open, onClose }) {
     onClose?.()
   }
 
+  function handleTableroClick() {
+    openTablero()
+    onClose?.()
+  }
+
   function handleAssessmentClick() {
     openAssessment()
     onClose?.()
@@ -44,6 +49,12 @@ export default function Sidebar({ open, onClose }) {
             onClick={handleDashboardClick}
           >
             <span className="dot" /> Dashboard
+          </div>
+          <div
+            className={`nav-item ${view === 'tablero' ? 'active' : ''}`}
+            onClick={handleTableroClick}
+          >
+            <span className="dot" /> Tablero General
           </div>
         </div>
 

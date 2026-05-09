@@ -40,6 +40,15 @@ export const ROLES_CHAMPION = [
 export const ESTADOS = ['Pendiente', 'En curso', 'Completado']
 
 export const PLATAFORMA_ID = 'Plataforma'
+export const TABLERO_ID = 'General'
+
+export const RESPONSABLES_TABLERO = [
+  'Miguel (yo)',
+  'Coordinar con AVarela',
+  'N4s (Benjamín + Facundo)',
+  'AVarela',
+  'Equipo',
+]
 
 // Tareas iniciales de la Plataforma para Fase 2
 // Se auto-seedean en el Sheet la primera vez que se abre esa fase vacía

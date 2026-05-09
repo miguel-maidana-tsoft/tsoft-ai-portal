@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { useApi } from '../hooks/useApi'
-import { OLAS, PLATAFORMA_ID } from '../constants'
+import { OLAS, PLATAFORMA_ID, TABLERO_ID } from '../constants'
 
 const AppContext = createContext(null)
 
@@ -14,6 +14,7 @@ export function AppProvider({ children }) {
   const [resumen, setResumen] = useState({})
   const [clientesInfo, setClientesInfo] = useState({})
   const [assessment, setAssessment] = useState(null) // null = no cargado, [] = cargado vacío
+  const [tablero, setTablero] = useState(null)        // null = no cargado, [] = cargado vacío
   const [view, setView] = useState('dashboard')
 
   const loadDashboard = useCallback(async () => {
@@ -46,7 +47,7 @@ export function AppProvider({ children }) {
   }, [call])
 
   const agregarTarea = useCallback(async (texto, cliente, faseId) => {
-    const ola = cliente === PLATAFORMA_ID ? PLATAFORMA_ID : currentOla
+    const ola = (cliente === PLATAFORMA_ID || cliente === TABLERO_ID) ? cliente : currentOla
     const result = await call({ action: 'agregarTarea', ola, cliente, faseId, texto })
     if (result.success) {
       setTareas((prev) => {
@@ -99,6 +100,49 @@ export function AppProvider({ children }) {
     setAssessment(Array.isArray(data) ? data : [])
   }, [call])
 
+  const loadTablero = useCallback(async () => {
+    const data = await call({ action: 'getTablero' })
+    setTablero(Array.isArray(data) ? data : [])
+  }, [call])
+
+  const agregarTableroTarea = useCallback(async (bloque, texto, detalle, semana, responsable) => {
+    const result = await call({ action: 'agregarTableroTarea', bloque, texto, detalle, semana, responsable })
+    if (result.success) {
+      setTablero((prev) => [
+        ...(prev || []),
+        { id: result.id, bloque, texto, detalle: detalle || '', semana: semana || '',
+          responsable: responsable || '', estado: 'Pendiente', notas: '' },
+      ])
+    }
+    return result
+  }, [call])
+
+  const actualizarTableroTarea = useCallback(async (id, campo, valor) => {
+    setTablero((prev) => prev.map((t) => t.id === id ? { ...t, [campo]: valor } : t))
+    await call({ action: 'actualizarTableroTarea', id, campo, valor })
+  }, [call])
+
+  const eliminarTableroTarea = useCallback(async (id) => {
+    setTablero((prev) => prev.filter((t) => t.id !== id))
+    await call({ action: 'eliminarTableroTarea', id })
+  }, [call])
+
+  const reordenarTableroBloque = useCallback(async (bloque, orderedIds) => {
+    setTablero((prev) => {
+      if (!prev) return prev
+      const other = prev.filter((t) => t.bloque !== bloque)
+      const reordered = orderedIds.map((id) => prev.find((t) => t.id === id)).filter(Boolean)
+      return [...other, ...reordered]
+    })
+    await call({ action: 'reordenarTableroBloque', bloque, orderedIds: orderedIds.join(',') })
+  }, [call])
+
+  const openTablero = useCallback(() => {
+    setCurrentCliente(TABLERO_ID)
+    setCurrentOla(TABLERO_ID)
+    setView('tablero')
+  }, [])
+
   const openAssessment = useCallback(() => {
     setView('assessment')
   }, [])
@@ -113,17 +157,23 @@ export function AppProvider({ children }) {
         currentOla, setCurrentOla,
         currentCliente, setCurrentCliente,
         currentFase, setCurrentFase,
-        tareas, resumen, clientesInfo, assessment,
+        tareas, resumen, clientesInfo, assessment, tablero,
         view,
         loadDashboard,
         loadTareas,
         loadAssessment,
+        loadTablero,
+        agregarTableroTarea,
+        actualizarTableroTarea,
+        eliminarTableroTarea,
+        reordenarTableroBloque,
         actualizarEstado,
         agregarTarea,
         eliminarTarea,
         actualizarClienteInfo,
         openTracker,
         openPlataforma,
+        openTablero,
         openAssessment,
         goToDashboard,
       }}

@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Tracker from './components/Tracker'
 import Assessment from './components/Assessment'
+import Tablero from './components/Tablero'
 import Toast from './components/Toast'
 import './styles/global.css'
 
@@ -23,6 +24,7 @@ export default function App() {
           {view === 'dashboard' && <Dashboard />}
           {(view === 'tracker' || view === 'plataforma') && <Tracker onToast={toast} />}
           {view === 'assessment' && <Assessment />}
+          {view === 'tablero' && <Tablero />}
         </main>
       </div>
       <Toast message={message} visible={visible} />

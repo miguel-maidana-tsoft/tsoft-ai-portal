@@ -6,6 +6,7 @@ import ChampionsEditor from './ChampionsEditor'
 const CAMPOS = [
   { fieldId: 'gerencia', label: 'Gerencia / Vertical' },
   { fieldId: 'gerente', label: 'Gerente TSOFT ref.' },
+  { fieldId: 'lider', label: 'Líder de proyecto TSOFT' },
   { fieldId: 'nivelC', label: 'Nivel C', placeholder: 'C1 / C2 / C3 / C4', hint: 'Madurez del cliente · C1 Escéptico · C2 Receptivo · C3 Activo · C4 Estratégico' },
   { fieldId: 'nivelP', label: 'Nivel P actual', placeholder: 'P1 / P2 / P3...', hint: 'Madurez del proyecto · P1 Ad-hoc · P2 Coordinado · P3 Integrado · P4 Autónomo · P5 Orquestado' },
   { fieldId: 'herramientas', label: 'Herramientas IA en uso', full: true },
