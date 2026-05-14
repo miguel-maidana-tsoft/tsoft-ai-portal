@@ -3,7 +3,7 @@ import { useAuth, ROL_LABELS } from '../context/AuthContext'
 import { OLAS, FASES, PLATAFORMA_ID, TABLERO_ID } from '../constants'
 
 export default function Sidebar({ open, onClose }) {
-  const { view, currentCliente, currentOla, clientesInfo, openTracker, openPlataforma, openTablero, openOla, openAssessment, goToDashboard } = useApp()
+  const { view, currentCliente, currentOla, clientesInfo, openTracker, openPlataforma, openTablero, openOla, openTableroGeneral, openAssessment, goToDashboard } = useApp()
   const { user, logout, canAccess } = useAuth()
 
   const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'
@@ -53,6 +53,7 @@ export default function Sidebar({ open, onClose }) {
 
   const showOlas = canAccess('tracker') && OLAS.some((o) => o.clientes.length > 0)
   const showTablero = canAccess('tablero')
+  const showTableroGeneral = canAccess('tablero')
   const showPlataforma = canAccess('plataforma')
   const showAssessment = canAccess('assessment')
   const showInternoSection = showPlataforma || showAssessment
@@ -70,6 +71,14 @@ export default function Sidebar({ open, onClose }) {
           >
             <span className="dot" /> Dashboard
           </div>
+          {showTableroGeneral && (
+            <div
+              className={`nav-item ${view === 'tablero-general' ? 'active' : ''}`}
+              onClick={() => { openTableroGeneral(); onClose?.() }}
+            >
+              <span className="dot" /> Tablero General
+            </div>
+          )}
         </div>
 
         {showOlas && (

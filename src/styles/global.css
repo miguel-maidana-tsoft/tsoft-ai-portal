@@ -2882,3 +2882,136 @@
   color: var(--muted);
   font-style: italic;
 }
+
+/* ══════════════════════════════════════════
+   TABLERO GENERAL PM
+══════════════════════════════════════════ */
+.tg-nueva-btn {
+  padding: 9px 18px;
+  background: var(--navy);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.tg-nueva-btn:hover { opacity: 0.85; }
+
+.tg-kpis {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tg-kpi {
+  font-size: 12.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tg-kpi-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.tg-kpi--curso .tg-kpi-num { color: var(--yellow); }
+.tg-kpi--done  .tg-kpi-num { color: var(--green);  }
+
+.tg-wrap {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tg-add-form {
+  padding: 16px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tg-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.tg-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tg-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.tg-row:last-child { border-bottom: none; }
+.tg-row:hover { background: var(--bg); }
+
+@keyframes tg-saving-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 0.3;  }
+}
+.tg-row--saving {
+  animation: tg-saving-pulse 1.1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.tg-row--completado .tg-texto {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.tg-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tg-texto {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1.4;
+}
+
+.tg-descripcion {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.tg-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.tg-edit-wrap {
+  padding: 14px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

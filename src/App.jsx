@@ -9,6 +9,7 @@ import Tracker from './components/Tracker'
 import Assessment from './components/Assessment'
 import Tablero from './components/Tablero'
 import OlaView from './components/OlaView'
+import TableroGeneral from './components/TableroGeneral'
 import Plataforma from './components/Plataforma'
 import Login from './components/Login'
 import Toast from './components/Toast'
@@ -18,6 +19,7 @@ const VIEW_SECTION = {
   dashboard: 'dashboard',
   tablero: 'tablero',
   ola: 'tablero',
+  'tablero-general': 'tablero',
   tracker: 'tracker',
   plataforma: 'plataforma',
   assessment: 'assessment',
@@ -53,6 +55,7 @@ export default function App() {
           {effectiveView === 'assessment' && <Assessment />}
           {effectiveView === 'tablero' && <Tablero />}
           {effectiveView === 'ola' && <OlaView />}
+          {effectiveView === 'tablero-general' && <TableroGeneral />}
         </main>
       </div>
       <Toast message={message} visible={visible} />

@@ -537,6 +537,71 @@ function eliminarPlataformaTarea(id) {
 }
 
 // ============================================================
+// TABLERO GENERAL PM
+// Sheet: Tablero_General_PM — id | texto | descripcion | estado | fecha_creacion | fecha_mod
+// ============================================================
+function getTareasGeneralesSheet() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName('Tablero_General_PM');
+  if (!sheet) {
+    sheet = ss.insertSheet('Tablero_General_PM');
+    sheet.appendRow(['id', 'texto', 'descripcion', 'estado', 'fecha_creacion', 'fecha_mod']);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getTareasGenerales() {
+  var sheet = getTareasGeneralesSheet();
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  return data.slice(1)
+    .filter(function(row) { return row[0] !== ''; })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = row[i]; });
+      return obj;
+    });
+}
+
+function agregarTareaGeneral(texto, descripcion) {
+  var sheet = getTareasGeneralesSheet();
+  var id = 'TG_' + new Date().getTime();
+  sheet.appendRow([id, texto || '', descripcion || '', 'Pendiente', new Date().toISOString(), new Date().toISOString()]);
+  return { success: true, id: id };
+}
+
+function actualizarTareaGeneral(id, campo, valor) {
+  var sheet = getTareasGeneralesSheet();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var colIdx = headers.indexOf(campo);
+  if (colIdx === -1) return { success: false, error: 'Campo no encontrado' };
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.getRange(i + 1, colIdx + 1).setValue(valor);
+      var fechaCol = headers.indexOf('fecha_mod');
+      if (fechaCol !== -1) sheet.getRange(i + 1, fechaCol + 1).setValue(new Date().toISOString());
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'Tarea no encontrada' };
+}
+
+function eliminarTareaGeneral(id) {
+  var sheet = getTareasGeneralesSheet();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false };
+}
+
+// ============================================================
 // CHECKLIST POR CLIENTE
 // Sheet: Checklist_Clientes — id | cliente | texto | completado | orden | fecha_mod
 // ============================================================
@@ -809,6 +874,16 @@ function doGet(e) {
       result = renombrarTableroBloque(e.parameter.tableroId, e.parameter.oldBloque, e.parameter.newBloque); break;
     case 'eliminarTableroBloque':
       result = eliminarTableroBloque(e.parameter.tableroId, e.parameter.bloque); break;
+
+    // TABLERO GENERAL PM
+    case 'getTareasGenerales':
+      result = getTareasGenerales(); break;
+    case 'agregarTareaGeneral':
+      result = agregarTareaGeneral(e.parameter.texto, e.parameter.descripcion); break;
+    case 'actualizarTareaGeneral':
+      result = actualizarTareaGeneral(e.parameter.id, e.parameter.campo, e.parameter.valor); break;
+    case 'eliminarTareaGeneral':
+      result = eliminarTareaGeneral(e.parameter.id); break;
 
     // PLATAFORMA TAREAS GENERALES
     case 'getPlataformaTareas':

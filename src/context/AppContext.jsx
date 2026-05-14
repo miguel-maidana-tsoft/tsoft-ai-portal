@@ -29,6 +29,9 @@ export function AppProvider({ children }) {
   const [checklist, setChecklist] = useState({})
   const [view, setView] = useState(_nav.view || 'dashboard')
 
+  // ── Tablero General PM ────────────────────────────────────
+  const [tareasGenerales, setTareasGenerales] = useState(null)
+
   // ── Plataforma: Tareas Generales ──────────────────────────
   const [plataformaTareas, setPlataformaTareas] = useState(null)
 
@@ -151,6 +154,36 @@ export function AppProvider({ children }) {
       return [...other, ...reordered]
     })
     await call({ action: 'reordenarTableroBloque', tableroId: 'General', bloque, orderedIds: orderedIds.join(',') })
+  }, [call])
+
+  const loadTareasGenerales = useCallback(async () => {
+    const data = await call({ action: 'getTareasGenerales' })
+    setTareasGenerales(Array.isArray(data) ? data : [])
+  }, [call])
+
+  const agregarTareaGeneral = useCallback(async (texto, descripcion) => {
+    const tempId = 'temp_' + Date.now()
+    setTareasGenerales((prev) => [
+      ...(prev || []),
+      { id: tempId, texto, descripcion: descripcion || '', estado: 'Pendiente', fecha_creacion: new Date().toISOString(), _saving: true },
+    ])
+    const result = await call({ action: 'agregarTareaGeneral', texto, descripcion })
+    if (result.success) {
+      setTareasGenerales((prev) => prev.map((t) => t.id === tempId ? { ...t, id: result.id, _saving: false } : t))
+    } else {
+      setTareasGenerales((prev) => prev.filter((t) => t.id !== tempId))
+    }
+    return result
+  }, [call])
+
+  const actualizarTareaGeneral = useCallback(async (id, campo, valor) => {
+    setTareasGenerales((prev) => prev.map((t) => t.id === id ? { ...t, [campo]: valor } : t))
+    await call({ action: 'actualizarTareaGeneral', id, campo, valor })
+  }, [call])
+
+  const eliminarTareaGeneral = useCallback(async (id) => {
+    setTareasGenerales((prev) => prev.filter((t) => t.id !== id))
+    await call({ action: 'eliminarTareaGeneral', id })
   }, [call])
 
   // ── Plataforma: Tareas Generales ──────────────────────────
@@ -303,6 +336,11 @@ export function AppProvider({ children }) {
     saveNav('tablero', TABLERO_ID, TABLERO_ID)
   }, [])
 
+  const openTableroGeneral = useCallback(() => {
+    setView('tablero-general')
+    saveNav('tablero-general', null, null)
+  }, [])
+
   const openOla = useCallback((olaId) => {
     const id = olaId || OLAS[0].id
     setCurrentOla(id)
@@ -328,6 +366,7 @@ export function AppProvider({ children }) {
         currentFase, setCurrentFase,
         tareas, resumen, clientesInfo, assessment, tablero,
         checklist,
+        tareasGenerales,
         plataformaTareas, plataformaSeg,
         view,
         loadDashboard,
@@ -342,6 +381,11 @@ export function AppProvider({ children }) {
         agregarTarea,
         eliminarTarea,
         actualizarClienteInfo,
+        // Tablero General PM
+        loadTareasGenerales,
+        agregarTareaGeneral,
+        actualizarTareaGeneral,
+        eliminarTareaGeneral,
         // Plataforma Tareas Generales
         loadPlataformaTareas,
         agregarPlataformaTarea,
@@ -365,6 +409,7 @@ export function AppProvider({ children }) {
         openPlataforma,
         openTablero,
         openOla,
+        openTableroGeneral,
         openAssessment,
         goToDashboard,
       }}
