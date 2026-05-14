@@ -2,19 +2,17 @@ import { OLAS } from '../../constants'
 
 export default function KpiGrid({ resumen }) {
   const clientes = OLAS.flatMap((o) => o.clientes)
-  const totalTareas = clientes.reduce((a, c) => a + (resumen[c]?.total || 0), 0)
-  const totalCompletadas = clientes.reduce((a, c) => a + (resumen[c]?.completadas || 0), 0)
-  const totalEnCurso = clientes.reduce((a, c) => a + (resumen[c]?.enCurso || 0), 0)
-  const pctGlobal = totalTareas > 0 ? Math.round((totalCompletadas / totalTareas) * 100) : 0
+  const totalItems = clientes.reduce((a, c) => a + (resumen[c]?.total || 0), 0)
+  const totalCompletados = clientes.reduce((a, c) => a + (resumen[c]?.completados || 0), 0)
+  const clientesConItems = clientes.filter((c) => (resumen[c]?.total || 0) > 0).length
+  const pctGlobal = totalItems > 0 ? Math.round((totalCompletados / totalItems) * 100) : 0
 
   return (
     <div className="kpi-grid">
       <div className="kpi-card">
         <div className="kpi-label">Avance global</div>
         <div className="kpi-value red">{pctGlobal}%</div>
-        <div className="kpi-sub">
-          {totalCompletadas} de {totalTareas} tareas
-        </div>
+        <div className="kpi-sub">{totalCompletados} de {totalItems} ítems</div>
       </div>
       <div className="kpi-card">
         <div className="kpi-label">Clientes Ola 1</div>
@@ -22,14 +20,14 @@ export default function KpiGrid({ resumen }) {
         <div className="kpi-sub">activos en programa</div>
       </div>
       <div className="kpi-card">
-        <div className="kpi-label">En curso</div>
-        <div className="kpi-value">{totalEnCurso}</div>
-        <div className="kpi-sub">tareas activas</div>
+        <div className="kpi-label">Con checklist</div>
+        <div className="kpi-value">{clientesConItems}</div>
+        <div className="kpi-sub">clientes con ítems cargados</div>
       </div>
       <div className="kpi-card">
-        <div className="kpi-label">Fase actual</div>
-        <div className="kpi-value">F1</div>
-        <div className="kpi-sub">Semana 1 · Lanzamiento</div>
+        <div className="kpi-label">Completados</div>
+        <div className="kpi-value">{totalCompletados}</div>
+        <div className="kpi-sub">ítems finalizados</div>
       </div>
     </div>
   )

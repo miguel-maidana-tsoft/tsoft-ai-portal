@@ -26,6 +26,7 @@ export function AppProvider({ children }) {
   const [clientesInfo, setClientesInfo] = useState({})
   const [assessment, setAssessment] = useState(null)
   const [tablero, setTablero] = useState(null)
+  const [checklist, setChecklist] = useState({})
   const [view, setView] = useState(_nav.view || 'dashboard')
 
   // ── Plataforma: Tareas Generales ──────────────────────────
@@ -36,12 +37,16 @@ export function AppProvider({ children }) {
 
   // ── Dashboard ─────────────────────────────────────────────
   const loadDashboard = useCallback(async () => {
-    const [res, info] = await Promise.all([
+    const [res, info, allCL] = await Promise.all([
       call({ action: 'getResumen' }),
       call({ action: 'getClientesInfo' }),
+      call({ action: 'getAllChecklistItems' }),
     ])
     setResumen(res)
     setClientesInfo(info)
+    if (allCL && typeof allCL === 'object' && !allCL.error) {
+      setChecklist((prev) => ({ ...prev, ...allCL }))
+    }
   }, [call])
 
   // ── Tracker ───────────────────────────────────────────────
@@ -236,6 +241,43 @@ export function AppProvider({ children }) {
     await call({ action: 'renombrarTableroBloque', tableroId: 'Plataforma', oldBloque, newBloque })
   }, [call])
 
+  // ── Checklist por cliente ─────────────────────────────────
+  const loadChecklist = useCallback(async (cliente) => {
+    const data = await call({ action: 'getChecklistCliente', cliente })
+    setChecklist((prev) => ({ ...prev, [cliente]: Array.isArray(data) ? data : [] }))
+  }, [call])
+
+  const agregarChecklistItem = useCallback(async (cliente, texto) => {
+    const tempId = 'temp_' + Date.now()
+    setChecklist((prev) => ({
+      ...prev,
+      [cliente]: [...(prev[cliente] || []), { id: tempId, cliente, texto, completado: false, orden: 999999, _saving: true }],
+    }))
+    const result = await call({ action: 'agregarChecklistItemCliente', cliente, texto })
+    if (result.success) {
+      setChecklist((prev) => ({
+        ...prev,
+        [cliente]: (prev[cliente] || []).map((t) => t.id === tempId ? { ...t, id: result.id, _saving: false } : t),
+      }))
+    } else {
+      setChecklist((prev) => ({ ...prev, [cliente]: (prev[cliente] || []).filter((t) => t.id !== tempId) }))
+    }
+    return result
+  }, [call])
+
+  const actualizarChecklistItem = useCallback(async (id, campo, valor, cliente) => {
+    setChecklist((prev) => ({
+      ...prev,
+      [cliente]: (prev[cliente] || []).map((t) => t.id === id ? { ...t, [campo]: valor } : t),
+    }))
+    await call({ action: 'actualizarChecklistItemCliente', id, campo, valor })
+  }, [call])
+
+  const eliminarChecklistItem = useCallback(async (id, cliente) => {
+    setChecklist((prev) => ({ ...prev, [cliente]: (prev[cliente] || []).filter((t) => t.id !== id) }))
+    await call({ action: 'eliminarChecklistItemCliente', id })
+  }, [call])
+
   // ── Navegación ────────────────────────────────────────────
   const openTracker = useCallback((cliente, ola) => {
     const olaId = ola || OLAS[0].id
@@ -278,6 +320,7 @@ export function AppProvider({ children }) {
         currentCliente, setCurrentCliente,
         currentFase, setCurrentFase,
         tareas, resumen, clientesInfo, assessment, tablero,
+        checklist,
         plataformaTareas, plataformaSeg,
         view,
         loadDashboard,
@@ -297,6 +340,11 @@ export function AppProvider({ children }) {
         agregarPlataformaTarea,
         actualizarPlataformaTarea,
         eliminarPlataformaTarea,
+        // Checklist por cliente
+        loadChecklist,
+        agregarChecklistItem,
+        actualizarChecklistItem,
+        eliminarChecklistItem,
         // Plataforma Seguimiento
         loadPlataformaSeg,
         agregarSegTarea,

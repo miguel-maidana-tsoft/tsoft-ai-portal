@@ -6,9 +6,9 @@ import ClienteCard from './ClienteCard'
 import Filtros from './Filtros'
 import Spinner from '../Spinner'
 
-const FILTROS_DEFAULT = { ola: 'todos', avance: 'todos', fase: 'todos' }
+const FILTROS_DEFAULT = { ola: 'todos', avance: 'todos' }
 
-function clienteMatchesFiltros(cliente, olaId, resumen, clientesInfo, filtros) {
+function clienteMatchesFiltros(cliente, olaId, resumen, filtros) {
   if (filtros.ola !== 'todos' && filtros.ola !== olaId) return false
 
   const r = resumen[cliente] || {}
@@ -17,17 +17,11 @@ function clienteMatchesFiltros(cliente, olaId, resumen, clientesInfo, filtros) {
   if (filtros.avance === 'en-progreso' && (pct === 0 || pct === 100)) return false
   if (filtros.avance === 'completado' && pct !== 100) return false
 
-  if (filtros.fase !== 'todos') {
-    // Si el cliente no tiene faseActual seteado, se asume Fase 1
-    const fa = clientesInfo[cliente]?.faseActual || '1'
-    if (String(fa) !== filtros.fase) return false
-  }
-
   return true
 }
 
 export default function Dashboard() {
-  const { resumen, clientesInfo, loadDashboard } = useApp()
+  const { resumen, clientesInfo, checklist, loadDashboard } = useApp()
   const [filtros, setFiltros] = useState(FILTROS_DEFAULT)
   const loaded = Object.keys(resumen).length > 0
 
@@ -37,12 +31,11 @@ export default function Dashboard() {
 
   const clientesFiltrados = OLAS.flatMap((o) =>
     o.clientes
-      .filter((c) => clienteMatchesFiltros(c, o.id, resumen, clientesInfo, filtros))
+      .filter((c) => clienteMatchesFiltros(c, o.id, resumen, filtros))
       .map((c) => ({ cliente: c, olaId: o.id }))
   )
 
-  const hayFiltrosActivos =
-    filtros.ola !== 'todos' || filtros.avance !== 'todos' || filtros.fase !== 'todos'
+  const hayFiltrosActivos = filtros.ola !== 'todos' || filtros.avance !== 'todos'
 
   return (
     <div>
@@ -78,6 +71,7 @@ export default function Dashboard() {
                   cliente={cliente}
                   resumen={resumen[cliente]}
                   info={clientesInfo[cliente]}
+                  items={checklist[cliente] || []}
                 />
               ))}
             </div>

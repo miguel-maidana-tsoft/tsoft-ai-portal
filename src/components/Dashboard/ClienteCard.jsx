@@ -1,22 +1,32 @@
-import { useApp } from '../../context/AppContext'
-
 function parseChampions(val) {
   if (!val) return []
   try { return JSON.parse(val) } catch { return [] }
 }
 
-export default function ClienteCard({ cliente, resumen, info }) {
-  const { openTracker } = useApp()
-  const r = resumen || { total: 0, completadas: 0, enCurso: 0, pendientes: 0, pct: 0 }
+function getSemaforo(pct, total) {
+  if (total === 0)  return { color: 'var(--pending-color)', variant: 'vacio' }
+  if (pct === 100)  return { color: 'var(--red)',           variant: 'completo' }
+  if (pct >= 50)    return { color: 'var(--green)',         variant: 'verde' }
+  if (pct > 0)      return { color: 'var(--yellow)',        variant: 'amarillo' }
+  return              { color: 'var(--red)',                variant: 'rojo' }
+}
+
+export default function ClienteCard({ cliente, resumen, info, items = [] }) {
+  const r = resumen || { total: 0, completados: 0, pct: 0 }
   const pct = r.pct || 0
-  const semaforo = pct === 100 ? '#16A34A' : pct > 0 ? '#D97706' : '#94A3B8'
+  const sem = getSemaforo(pct, r.total)
 
   const nivelCBase = info?.nivelC?.split('–')[0].replace(/[^CP0-9]/g, '')
   const nivelPBase = info?.nivelP?.split(' ')[0].replace(/[^CP0-9]/g, '')
   const champions = parseChampions(info?.champion).filter(c => c.nombre)
 
   return (
-    <div className="cliente-card" onClick={() => openTracker(cliente)}>
+    <div className={`cliente-card cliente-card--${sem.variant}`}>
+
+      {sem.variant === 'completo' && (
+        <div className="card-completo-badge">✓ 100% Completado</div>
+      )}
+
       <div className="cliente-card-header">
         <div>
           <div className="cliente-name">{cliente}</div>
@@ -48,38 +58,41 @@ export default function ClienteCard({ cliente, resumen, info }) {
         </div>
       )}
 
-      <div className="progress-bar-wrap">
-        <div
-          className="progress-bar-fill"
-          style={{ width: `${pct}%`, background: semaforo }}
-        />
-      </div>
+      {r.total > 0 && (
+        <>
+          <div className="progress-bar-wrap">
+            <div
+              className="progress-bar-fill"
+              style={{ width: `${pct}%`, background: sem.color }}
+            />
+          </div>
 
-      <div className="progress-stats">
-        <span>
-          <span className="stat-dot" style={{ background: 'var(--green)' }} />
-          {r.completadas} completadas
-        </span>
-        <span>
-          <span className="stat-dot" style={{ background: 'var(--yellow)' }} />
-          {r.enCurso} en curso
-        </span>
-        <span>
-          <span className="stat-dot" style={{ background: 'var(--border)' }} />
-          {r.pendientes} pendientes
-        </span>
-      </div>
+          <div className="card-checklist-stats">
+            <span className="card-cl-fraction" style={{ color: sem.color }}>
+              {r.completados}/{r.total} ítems
+            </span>
+            <span className="card-cl-pct">{pct}% completado</span>
+          </div>
+
+          <div className="card-cl-list">
+            {items.map((item) => (
+              <div key={item.id} className={`card-cl-item ${item.completado ? 'card-cl-item--done' : ''}`}>
+                <span className="card-cl-check" style={{ borderColor: item.completado ? sem.color : undefined, background: item.completado ? sem.color : undefined }}>
+                  {item.completado ? '✓' : ''}
+                </span>
+                <span className="card-cl-texto">{item.texto}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {r.total === 0 && (
+        <div className="card-cl-empty">Sin ítems en checklist</div>
+      )}
 
       {info?.proximoPaso && (
-        <div
-          style={{
-            marginTop: 10,
-            fontSize: 11.5,
-            color: 'var(--muted)',
-            borderTop: '1px solid var(--border)',
-            paddingTop: 8,
-          }}
-        >
+        <div className="card-proximo-paso">
           → {info.proximoPaso}
         </div>
       )}

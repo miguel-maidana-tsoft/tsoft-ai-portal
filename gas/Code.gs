@@ -159,20 +159,27 @@ function getTareas(ola, cliente) {
 }
 
 function getResumenGeneral() {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) return { error: 'Sheet no inicializada' };
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const rows = data.slice(1);
-  const resumen = {};
-  OLA_CONFIG['Ola 1'].clientes.forEach(cliente => {
-    const tareas = rows.filter(r => r[headers.indexOf('cliente')] === cliente);
-    const total = tareas.length;
-    const completadas = tareas.filter(r => r[headers.indexOf('estado')] === 'Completado').length;
-    const enCurso = tareas.filter(r => r[headers.indexOf('estado')] === 'En curso').length;
-    const pendientes = tareas.filter(r => r[headers.indexOf('estado')] === 'Pendiente').length;
-    resumen[cliente] = { total, completadas, enCurso, pendientes, pct: total > 0 ? Math.round((completadas/total)*100) : 0 };
+  var sheet = getChecklistClienteSheet();
+  var data = sheet.getDataRange().getValues();
+  var resumen = {};
+  if (data.length <= 1) {
+    OLA_CONFIG['Ola 1'].clientes.forEach(function(c) {
+      resumen[c] = { total: 0, completados: 0, pct: 0 };
+    });
+    return resumen;
+  }
+  var headers = data[0];
+  var clienteCol   = headers.indexOf('cliente');
+  var completadoCol = headers.indexOf('completado');
+  var rows = data.slice(1).filter(function(r) { return r[0] !== ''; });
+  OLA_CONFIG['Ola 1'].clientes.forEach(function(cliente) {
+    var items = rows.filter(function(r) { return String(r[clienteCol]) === cliente; });
+    var total = items.length;
+    var completados = items.filter(function(r) {
+      var v = r[completadoCol];
+      return v === true || v === 'TRUE' || v === 1;
+    }).length;
+    resumen[cliente] = { total: total, completados: completados, pct: total > 0 ? Math.round((completados/total)*100) : 0 };
   });
   return resumen;
 }
@@ -530,7 +537,105 @@ function eliminarPlataformaTarea(id) {
 }
 
 // ============================================================
-// CHECKLIST
+// CHECKLIST POR CLIENTE
+// Sheet: Checklist_Clientes — id | cliente | texto | completado | orden | fecha_mod
+// ============================================================
+function getChecklistClienteSheet() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName('Checklist_Clientes');
+  if (!sheet) {
+    sheet = ss.insertSheet('Checklist_Clientes');
+    sheet.appendRow(['id', 'cliente', 'texto', 'completado', 'orden', 'fecha_mod']);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getChecklistCliente(cliente) {
+  var sheet = getChecklistClienteSheet();
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var clienteCol = headers.indexOf('cliente');
+  var rows = data.slice(1)
+    .filter(function(row) { return row[0] !== '' && String(row[clienteCol]) === String(cliente); })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = row[i]; });
+      obj.completado = (obj.completado === true || obj.completado === 'TRUE' || obj.completado === 1);
+      return obj;
+    });
+  rows.sort(function(a, b) {
+    return (Number(a.orden) || 999999) - (Number(b.orden) || 999999);
+  });
+  return rows;
+}
+
+function agregarChecklistItemCliente(cliente, texto) {
+  var sheet = getChecklistClienteSheet();
+  var id = 'CLC_' + new Date().getTime();
+  sheet.appendRow([id, cliente || '', texto || '', false, 999999, new Date().toISOString()]);
+  return { success: true, id: id };
+}
+
+function actualizarChecklistItemCliente(id, campo, valor) {
+  var sheet = getChecklistClienteSheet();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var colIdx = headers.indexOf(campo);
+  if (colIdx === -1) return { success: false, error: 'Campo no encontrado' };
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      var val = valor;
+      if (campo === 'completado') val = (valor === 'true' || valor === true || valor === '1' || valor === 1);
+      sheet.getRange(i + 1, colIdx + 1).setValue(val);
+      var fechaCol = headers.indexOf('fecha_mod');
+      if (fechaCol !== -1) sheet.getRange(i + 1, fechaCol + 1).setValue(new Date().toISOString());
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'Item no encontrado' };
+}
+
+function eliminarChecklistItemCliente(id) {
+  var sheet = getChecklistClienteSheet();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false };
+}
+
+function getAllChecklistItems() {
+  var sheet = getChecklistClienteSheet();
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return {};
+  var headers = data[0];
+  var clienteCol = headers.indexOf('cliente');
+  var result = {};
+  data.slice(1)
+    .filter(function(row) { return row[0] !== ''; })
+    .forEach(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = row[i]; });
+      obj.completado = (obj.completado === true || obj.completado === 'TRUE' || obj.completado === 1);
+      var c = String(row[clienteCol]);
+      if (!result[c]) result[c] = [];
+      result[c].push(obj);
+    });
+  Object.keys(result).forEach(function(c) {
+    result[c].sort(function(a, b) {
+      return (Number(a.orden) || 999999) - (Number(b.orden) || 999999);
+    });
+  });
+  return result;
+}
+
+// ============================================================
+// CHECKLIST GLOBAL (legacy — sin uso activo)
 // — Items globales (mismos para todos los clientes)
 // — Hoja 'Checklist': id | texto | orden | {cliente}...
 // — Las columnas de clientes son dinámicas (TRUE/FALSE)
@@ -715,7 +820,20 @@ function doGet(e) {
     case 'eliminarPlataformaTarea':
       result = eliminarPlataformaTarea(e.parameter.id); break;
 
-    // CHECKLIST
+    case 'getAllChecklistItems':
+      result = getAllChecklistItems(); break;
+
+    // CHECKLIST POR CLIENTE
+    case 'getChecklistCliente':
+      result = getChecklistCliente(e.parameter.cliente); break;
+    case 'agregarChecklistItemCliente':
+      result = agregarChecklistItemCliente(e.parameter.cliente, e.parameter.texto); break;
+    case 'actualizarChecklistItemCliente':
+      result = actualizarChecklistItemCliente(e.parameter.id, e.parameter.campo, e.parameter.valor); break;
+    case 'eliminarChecklistItemCliente':
+      result = eliminarChecklistItemCliente(e.parameter.id); break;
+
+    // CHECKLIST GLOBAL (legacy)
     case 'getChecklist':
       result = getChecklist(); break;
     case 'agregarChecklistItem':

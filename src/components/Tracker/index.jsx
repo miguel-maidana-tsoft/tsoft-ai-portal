@@ -1,22 +1,9 @@
-import { useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
-import { FASES, PLATAFORMA_ID } from '../../constants'
-import FaseTabs from './FaseTabs'
-import FasePanel from './FasePanel'
+import Checklist from './Checklist'
 import InfoCliente from './InfoCliente'
-import Spinner from '../Spinner'
 
 export default function Tracker({ onToast }) {
-  const { currentCliente, currentOla, currentFase, clientesInfo, tareas, loadTareas, goToDashboard } = useApp()
-  const loaded = tareas[currentCliente] !== undefined
-  const isPlataforma = currentOla === PLATAFORMA_ID
-
-  const faseActualId = clientesInfo[currentCliente]?.faseActual
-  const faseActual = FASES.find((f) => String(f.id) === String(faseActualId))
-
-  useEffect(() => {
-    if (currentCliente) loadTareas(currentCliente, currentOla)
-  }, [currentCliente, loadTareas, currentOla])
+  const { currentCliente, goToDashboard } = useApp()
 
   return (
     <div>
@@ -25,31 +12,15 @@ export default function Tracker({ onToast }) {
           ← Volver
         </button>
         <div className="tracker-title-wrap">
-          <div className="tracker-title">
-            {isPlataforma ? 'Plataforma Agéntica TSOFT' : currentCliente}
-          </div>
-          {!isPlataforma && faseActual && (
-            <span className="tracker-fase-actual">
-              ★ Estamos aquí: {faseActual.nombre} · {faseActual.subtitulo}
-            </span>
-          )}
+          <div className="tracker-title">{currentCliente}</div>
         </div>
       </div>
 
-      <FaseTabs />
+      <Checklist />
 
-      {!loaded ? (
-        <Spinner text="Cargando tareas..." />
-      ) : (
-        <>
-          <FasePanel onToast={onToast} />
-          {!isPlataforma && (
-            <div style={{ marginTop: 24 }}>
-              <InfoCliente />
-            </div>
-          )}
-        </>
-      )}
+      <div style={{ marginTop: 24 }}>
+        <InfoCliente onToast={onToast} />
+      </div>
     </div>
   )
 }
