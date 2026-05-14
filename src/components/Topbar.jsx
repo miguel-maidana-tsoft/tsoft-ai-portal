@@ -1,10 +1,13 @@
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { FASES, PLATAFORMA_ID } from '../constants'
 
 export default function Topbar({ onMenuToggle }) {
   const { currentOla, currentFase, view } = useApp()
+  const { user } = useAuth()
   const fase = FASES.find((f) => f.id === currentFase)
   const isPlataforma = currentOla === PLATAFORMA_ID
+  const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'
 
   return (
     <div className="topbar">
@@ -28,6 +31,12 @@ export default function Topbar({ onMenuToggle }) {
           <span className="badge-fase">
             {fase.nombre} · {fase.periodo}
           </span>
+        )}
+        {user && (
+          <div className="topbar-user">
+            <span className="topbar-user-avatar">{initial}</span>
+            <span className="topbar-user-name">{user.nombre.split(' ')[0]}</span>
+          </div>
         )}
       </div>
     </div>
