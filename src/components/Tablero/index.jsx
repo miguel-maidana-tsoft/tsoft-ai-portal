@@ -43,13 +43,17 @@ function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isD
     setEditing(true)
   }
 
+  const [saving, setSaving] = useState(false)
+
   async function handleGuardar() {
+    setSaving(true)
     const campos = ['texto', 'detalle', 'semana', 'responsable', 'notas']
     await Promise.all(
       campos
         .filter((c) => form[c] !== tarea[c])
         .map((c) => onActualizar(tarea.id, c, form[c]))
     )
+    setSaving(false)
     setEditing(false)
   }
 
@@ -94,10 +98,10 @@ function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isD
           rows={1}
         />
         <div className="tt-actions">
-          <button className="tt-btn-save" onClick={handleGuardar} disabled={!form.texto.trim()}>
-            Guardar
+          <button className="tt-btn-save" onClick={handleGuardar} disabled={saving || !form.texto.trim()}>
+            {saving ? <><span className="tarea-spinner btn-spinner" /> Guardando...</> : 'Guardar'}
           </button>
-          <button className="tt-btn-cancel" onClick={() => setEditing(false)}>
+          <button className="tt-btn-cancel" onClick={() => setEditing(false)} disabled={saving}>
             Cancelar
           </button>
         </div>
@@ -113,8 +117,9 @@ function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isD
       className={[
         'tt-row',
         `tt-row--${estadoSlug}`,
-        isDragOver  ? 'tt-row--drag-over'  : '',
-        isDragging  ? 'tt-row--dragging'   : '',
+        isDragOver    ? 'tt-row--drag-over'  : '',
+        isDragging    ? 'tt-row--dragging'   : '',
+        tarea._saving ? 'tt-row--saving'     : '',
       ].filter(Boolean).join(' ')}
       draggable
       onDragStart={dragHandlers.onDragStart}
@@ -175,14 +180,11 @@ function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isD
 // ── Formulario de nueva tarea ────────────────────────────────────
 function AddTareaForm({ bloque, onAdd, onCancel }) {
   const [form, setForm] = useState({ texto: '', detalle: '', semana: '', responsable: '' })
-  const [saving, setSaving] = useState(false)
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault()
     if (!form.texto.trim()) return
-    setSaving(true)
-    await onAdd(bloque, form.texto.trim(), form.detalle, form.semana, form.responsable)
-    setSaving(false)
+    onAdd(bloque, form.texto.trim(), form.detalle, form.semana, form.responsable)
     onCancel()
   }
 
@@ -219,8 +221,8 @@ function AddTareaForm({ bloque, onAdd, onCancel }) {
         </select>
       </div>
       <div className="tt-actions">
-        <button className="tt-btn-save" type="submit" disabled={saving || !form.texto.trim()}>
-          {saving ? '...' : 'Agregar tarea'}
+        <button className="tt-btn-save" type="submit" disabled={!form.texto.trim()}>
+          Agregar tarea
         </button>
         <button className="tt-btn-cancel" type="button" onClick={onCancel}>
           Cancelar

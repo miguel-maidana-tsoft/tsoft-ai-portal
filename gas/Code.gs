@@ -4,7 +4,13 @@
 // ============================================================
 
 const SHEET_ID = '10bleHEMvUmxtoM6HVNswaXDsbN8zJPHLEzeljV37HEk';
-const SHEET_NAME = 'Seguimiento';
+const SHEET_NAME = 'Seguimiento_Clientes';
+
+// Mapa explícito: tableroId → nombre del sheet dedicado
+var TABLERO_SHEET_NAMES = {
+  'General':    'Tablero_General',
+  'Plataforma': 'Plataforma_Seguimiento',
+};
 
 const OLA_CONFIG = {
   'Ola 1': {
@@ -271,47 +277,39 @@ function getAssessment() {
 }
 
 // ============================================================
-// TABLERO (Plan General + Tableros por Ola)
-// — Columna tableroId: 'General' = Plan General, 'Ola 1', 'Ola 2', etc.
-// — Migración automática: filas sin tableroId quedan como 'General'
+// TABLERO — Sheet dedicado por tablero
+// 'General' → Tablero_General  |  'Plataforma' → Tablero_Plataforma
+// Agregar más tableros es gratis: solo pasar un nuevo tableroId
 // ============================================================
-function getTableroSheet() {
+function getSheetForTablero(tableroId) {
+  var tId = String(tableroId || 'General');
+  var sheetName = TABLERO_SHEET_NAMES[tId] || ('Tablero_' + tId);
   var ss = SpreadsheetApp.openById(SHEET_ID);
-  var sheet = ss.getSheetByName('Tablero');
+  var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    sheet = ss.insertSheet('Tablero');
-    sheet.appendRow(['id','tableroId','bloque','texto','detalle','semana','responsable','estado','notas','orden','fecha_mod']);
+    sheet = ss.insertSheet(sheetName);
+    sheet.appendRow(['id','bloque','texto','detalle','semana','responsable','estado','notas','orden','fecha_mod','prioridad']);
     sheet.setFrozenRows(1);
   } else {
-    // Migración: agregar columna tableroId si no existe aún
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    if (headers.indexOf('tableroId') === -1) {
-      sheet.insertColumnAfter(1);
-      sheet.getRange(1, 2).setValue('tableroId');
-      var lastRow = sheet.getLastRow();
-      if (lastRow > 1) {
-        sheet.getRange(2, 2, lastRow - 1, 1).setValue('General');
-      }
+    if (headers.indexOf('prioridad') === -1) {
+      sheet.getRange(1, headers.length + 1).setValue('prioridad');
     }
   }
   return sheet;
 }
 
 function getTablero(tableroId) {
-  var tId = tableroId || 'General';
-  var sheet = getTableroSheet();
+  var sheet = getSheetForTablero(tableroId);
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0];
   var rows = data.slice(1)
+    .filter(function(row) { return String(row[0]) !== ''; })
     .map(function(row) {
       var obj = {};
       headers.forEach(function(h, i) { obj[h] = row[i]; });
       return obj;
-    })
-    .filter(function(row) {
-      var rowTId = row.tableroId || 'General';
-      return String(rowTId) === String(tId);
     });
   rows.sort(function(a, b) {
     var oa = (a.orden !== '' && a.orden !== undefined) ? Number(a.orden) : 999999;
@@ -321,20 +319,24 @@ function getTablero(tableroId) {
   return rows;
 }
 
-function agregarTableroTarea(tableroId, bloque, texto, detalle, semana, responsable) {
-  var sheet = getTableroSheet();
+function agregarTableroTarea(tableroId, bloque, texto, detalle, semana, responsable, prioridad) {
+  var sheet = getSheetForTablero(tableroId);
   var id = 'T_' + new Date().getTime();
-  var tId = tableroId || 'General';
-  sheet.appendRow([
-    id, tId, bloque||'', texto||'', detalle||'',
-    semana||'', responsable||'', 'Pendiente', '', 999999,
-    new Date().toISOString()
-  ]);
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var vals = {
+    id: id, bloque: bloque||'', texto: texto||'', detalle: detalle||'',
+    semana: semana||'', responsable: responsable||'', estado: 'Pendiente', notas: '',
+    orden: 999999, fecha_mod: new Date().toISOString(), prioridad: prioridad||'media'
+  };
+  var newRow = headers.map(function(h) {
+    return (h !== '' && vals[h] !== undefined) ? vals[h] : '';
+  });
+  sheet.appendRow(newRow);
   return { success: true, id: id };
 }
 
-function actualizarTableroTarea(id, campo, valor) {
-  var sheet = getTableroSheet();
+function actualizarTableroTarea(tableroId, id, campo, valor) {
+  var sheet = getSheetForTablero(tableroId);
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var colIdx = headers.indexOf(campo);
@@ -350,8 +352,8 @@ function actualizarTableroTarea(id, campo, valor) {
   return { success: false, error: 'Tarea no encontrada' };
 }
 
-function eliminarTableroTarea(id) {
-  var sheet = getTableroSheet();
+function eliminarTableroTarea(tableroId, id) {
+  var sheet = getSheetForTablero(tableroId);
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][0]) === String(id)) {
@@ -363,16 +365,16 @@ function eliminarTableroTarea(id) {
 }
 
 function reordenarTableroBloque(tableroId, bloque, orderedIds) {
-  var sheet = getTableroSheet();
+  var sheet = getSheetForTablero(tableroId);
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
   var idCol = headers.indexOf('id');
   var ordenCol = headers.indexOf('orden');
   if (ordenCol === -1) {
-    ordenCol = headers.length;
-    sheet.getRange(1, ordenCol + 1).setValue('orden');
+    sheet.getRange(1, headers.length + 1).setValue('orden');
     data = sheet.getDataRange().getValues();
     headers = data[0];
+    ordenCol = headers.indexOf('orden');
   }
   var ids = String(orderedIds).split(',');
   ids.forEach(function(id, index) {
@@ -385,6 +387,146 @@ function reordenarTableroBloque(tableroId, bloque, orderedIds) {
     }
   });
   return { success: true };
+}
+
+function renombrarTableroBloque(tableroId, oldBloque, newBloque) {
+  var sheet = getSheetForTablero(tableroId);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var bloqueCol = headers.indexOf('bloque');
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][bloqueCol]) === String(oldBloque)) {
+      sheet.getRange(i + 1, bloqueCol + 1).setValue(newBloque);
+    }
+  }
+  return { success: true };
+}
+
+function eliminarTableroBloque(tableroId, bloque) {
+  var sheet = getSheetForTablero(tableroId);
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var bloqueCol = headers.indexOf('bloque');
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][bloqueCol]) === String(bloque)) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+  return { success: true };
+}
+
+// Renombra los sheets existentes al nuevo esquema de nombres (ejecutar una sola vez)
+function migrarNombresHojas() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var renombres = [
+    { de: 'Seguimiento',        a: 'Seguimiento_Clientes' },
+    { de: 'Plataforma_Tareas',  a: 'Plataforma_General' },
+    { de: 'Tablero_Plataforma', a: 'Plataforma_Seguimiento' },
+  ];
+  var resultado = [];
+  renombres.forEach(function(r) {
+    var sheet = ss.getSheetByName(r.de);
+    if (sheet) {
+      sheet.setName(r.a);
+      resultado.push(r.de + ' → ' + r.a);
+    } else {
+      resultado.push(r.de + ' (no encontrado, ignorado)');
+    }
+  });
+  return { success: true, cambios: resultado };
+}
+
+// Migración única: copia filas del viejo sheet 'Tablero' a los sheets dedicados
+function migrarTableroData() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var oldSheet = ss.getSheetByName('Tablero');
+  if (!oldSheet) return { success: false, error: 'No existe hoja Tablero original' };
+  var data = oldSheet.getDataRange().getValues();
+  var headers = data[0];
+  var tIdCol = headers.indexOf('tableroId');
+  var moved = {};
+  data.slice(1).forEach(function(row) {
+    if (!row[0]) return;
+    var tId = (tIdCol >= 0 && row[tIdCol]) ? String(row[tIdCol]) : 'General';
+    var targetSheet = getSheetForTablero(tId);
+    var targetHeaders = targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0];
+    var vals = {};
+    headers.forEach(function(h, i) { if (h && h !== 'tableroId') vals[h] = row[i]; });
+    var newRow = targetHeaders.map(function(h) {
+      return (h !== '' && vals[h] !== undefined) ? vals[h] : '';
+    });
+    targetSheet.appendRow(newRow);
+    moved[tId] = (moved[tId] || 0) + 1;
+  });
+  return { success: true, moved: moved };
+}
+
+// ============================================================
+// PLATAFORMA — Tareas Generales
+// ============================================================
+function getPlataformaTareasSheet() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName('Plataforma_General');
+  if (!sheet) {
+    sheet = ss.insertSheet('Plataforma_General');
+    sheet.appendRow(['id','texto','descripcion','estado','fecha_creacion','orden']);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getPlataformaTareas() {
+  var sheet = getPlataformaTareasSheet();
+  var data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  var headers = data[0];
+  var rows = data.slice(1)
+    .filter(function(row) { return row[0] !== ''; })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) { obj[h] = row[i]; });
+      return obj;
+    });
+  rows.sort(function(a, b) {
+    var oa = (a.orden !== '' && a.orden !== undefined) ? Number(a.orden) : 999999;
+    var ob = (b.orden !== '' && b.orden !== undefined) ? Number(b.orden) : 999999;
+    return oa - ob;
+  });
+  return rows;
+}
+
+function agregarPlataformaTarea(texto, descripcion) {
+  var sheet = getPlataformaTareasSheet();
+  var id = 'PT_' + new Date().getTime();
+  sheet.appendRow([id, texto||'', descripcion||'', 'Pendiente', new Date().toISOString(), 999999]);
+  return { success: true, id: id };
+}
+
+function actualizarPlataformaTarea(id, campo, valor) {
+  var sheet = getPlataformaTareasSheet();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var colIdx = headers.indexOf(campo);
+  if (colIdx === -1) return { success: false, error: 'Campo no encontrado' };
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.getRange(i + 1, colIdx + 1).setValue(valor);
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'Tarea no encontrada' };
+}
+
+function eliminarPlataformaTarea(id) {
+  var sheet = getPlataformaTareasSheet();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false };
 }
 
 // ============================================================
@@ -547,13 +689,31 @@ function doGet(e) {
     case 'getTablero':
       result = getTablero(e.parameter.tableroId); break;
     case 'agregarTableroTarea':
-      result = agregarTableroTarea(e.parameter.tableroId, e.parameter.bloque, e.parameter.texto, e.parameter.detalle, e.parameter.semana, e.parameter.responsable); break;
+      result = agregarTableroTarea(e.parameter.tableroId, e.parameter.bloque, e.parameter.texto, e.parameter.detalle, e.parameter.semana, e.parameter.responsable, e.parameter.prioridad); break;
     case 'actualizarTableroTarea':
-      result = actualizarTableroTarea(e.parameter.id, e.parameter.campo, e.parameter.valor); break;
+      result = actualizarTableroTarea(e.parameter.tableroId, e.parameter.id, e.parameter.campo, e.parameter.valor); break;
     case 'eliminarTableroTarea':
-      result = eliminarTableroTarea(e.parameter.id); break;
+      result = eliminarTableroTarea(e.parameter.tableroId, e.parameter.id); break;
+    case 'migrarTableroData':
+      result = migrarTableroData(); break;
+    case 'migrarNombresHojas':
+      result = migrarNombresHojas(); break;
     case 'reordenarTableroBloque':
       result = reordenarTableroBloque(e.parameter.tableroId, e.parameter.bloque, e.parameter.orderedIds); break;
+    case 'renombrarTableroBloque':
+      result = renombrarTableroBloque(e.parameter.tableroId, e.parameter.oldBloque, e.parameter.newBloque); break;
+    case 'eliminarTableroBloque':
+      result = eliminarTableroBloque(e.parameter.tableroId, e.parameter.bloque); break;
+
+    // PLATAFORMA TAREAS GENERALES
+    case 'getPlataformaTareas':
+      result = getPlataformaTareas(); break;
+    case 'agregarPlataformaTarea':
+      result = agregarPlataformaTarea(e.parameter.texto, e.parameter.descripcion); break;
+    case 'actualizarPlataformaTarea':
+      result = actualizarPlataformaTarea(e.parameter.id, e.parameter.campo, e.parameter.valor); break;
+    case 'eliminarPlataformaTarea':
+      result = eliminarPlataformaTarea(e.parameter.id); break;
 
     // CHECKLIST
     case 'getChecklist':
