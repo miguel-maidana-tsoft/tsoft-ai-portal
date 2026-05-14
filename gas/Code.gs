@@ -8,7 +8,7 @@ const SHEET_NAME = 'Seguimiento_Clientes';
 
 // Mapa explícito: tableroId → nombre del sheet dedicado
 var TABLERO_SHEET_NAMES = {
-  'General':    'Tablero_General',
+  'General':    'Tablero_Olas',
   'Plataforma': 'Plataforma_Seguimiento',
 };
 

@@ -332,7 +332,7 @@ function BloqueSection({ bloque, tareas, onEstado, onEliminar, onActualizar, onA
 }
 
 // ── Tablero principal ────────────────────────────────────────────
-export default function Tablero() {
+export default function Tablero({ hideHeader = false }) {
   const {
     tablero, loadTablero,
     agregarTableroTarea, actualizarTableroTarea, eliminarTableroTarea, reordenarTableroBloque,
@@ -368,10 +368,12 @@ export default function Tablero() {
   return (
     <div className="tablero-wrap">
       <div className="tablero-header">
-        <div>
-          <div className="tablero-title">Tablero General</div>
-          <div className="tablero-subtitle">Tareas transversales del programa</div>
-        </div>
+        {!hideHeader && (
+          <div>
+            <div className="tablero-title">Tablero General</div>
+            <div className="tablero-subtitle">Tareas transversales del programa</div>
+          </div>
+        )}
         <div className="tablero-header-actions">
           {addingBloque ? (
             <form className="nuevo-bloque-form" onSubmit={handleNuevoBloque}>

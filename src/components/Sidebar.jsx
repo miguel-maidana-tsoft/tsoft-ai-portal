@@ -3,7 +3,7 @@ import { useAuth, ROL_LABELS } from '../context/AuthContext'
 import { OLAS, FASES, PLATAFORMA_ID, TABLERO_ID } from '../constants'
 
 export default function Sidebar({ open, onClose }) {
-  const { view, currentCliente, clientesInfo, openTracker, openPlataforma, openTablero, openAssessment, goToDashboard } = useApp()
+  const { view, currentCliente, currentOla, clientesInfo, openTracker, openPlataforma, openTablero, openOla, openAssessment, goToDashboard } = useApp()
   const { user, logout, canAccess } = useAuth()
 
   const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'
@@ -36,6 +36,11 @@ export default function Sidebar({ open, onClose }) {
     onClose?.()
   }
 
+  function handleOlaClick(olaId) {
+    openOla(olaId)
+    onClose?.()
+  }
+
   function handleAssessmentClick() {
     openAssessment()
     onClose?.()
@@ -65,14 +70,6 @@ export default function Sidebar({ open, onClose }) {
           >
             <span className="dot" /> Dashboard
           </div>
-          {showTablero && (
-            <div
-              className={`nav-item ${view === 'tablero' ? 'active' : ''}`}
-              onClick={handleTableroClick}
-            >
-              <span className="dot" /> Tablero General
-            </div>
-          )}
         </div>
 
         {showOlas && (
@@ -81,6 +78,14 @@ export default function Sidebar({ open, onClose }) {
             {OLAS.filter((o) => o.clientes.length > 0).map((ola) => (
               <div className="sidebar-section" key={ola.id}>
                 <div className="sidebar-label">{ola.label}</div>
+                {showTablero && (
+                  <div
+                    className={`nav-item ${view === 'ola' && currentOla === ola.id ? 'active' : ''}`}
+                    onClick={() => handleOlaClick(ola.id)}
+                  >
+                    <span className="dot" /> Tablero de Seguimiento
+                  </div>
+                )}
                 {ola.clientes.map((cliente) => {
                   const faseLabel = getFaseLabel(cliente)
                   const isActive = view === 'tracker' && currentCliente === cliente

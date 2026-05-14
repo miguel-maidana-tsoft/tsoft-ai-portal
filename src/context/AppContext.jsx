@@ -303,6 +303,13 @@ export function AppProvider({ children }) {
     saveNav('tablero', TABLERO_ID, TABLERO_ID)
   }, [])
 
+  const openOla = useCallback((olaId) => {
+    const id = olaId || OLAS[0].id
+    setCurrentOla(id)
+    setView('ola')
+    saveNav('ola', null, id)
+  }, [])
+
   const openAssessment = useCallback(() => {
     setView('assessment')
     saveNav('assessment', null, null)
@@ -357,6 +364,7 @@ export function AppProvider({ children }) {
         openTracker,
         openPlataforma,
         openTablero,
+        openOla,
         openAssessment,
         goToDashboard,
       }}
