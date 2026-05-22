@@ -12,6 +12,7 @@ import OlaView from './components/OlaView'
 import TableroGeneral from './components/TableroGeneral'
 import Plataforma from './components/Plataforma'
 import Login from './components/Login'
+import CambiarPassword from './components/CambiarPassword'
 import Toast from './components/Toast'
 import './styles/global.css'
 
@@ -27,7 +28,7 @@ const VIEW_SECTION = {
 
 export default function App() {
   const { view } = useApp()
-  const { isAuthenticated, canAccess } = useAuth()
+  const { isAuthenticated, canAccess, requirePasswordChange } = useAuth()
   const { message, visible, toast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -38,6 +39,10 @@ export default function App() {
         <Toast message={message} visible={visible} />
       </>
     )
+  }
+
+  if (requirePasswordChange) {
+    return <CambiarPassword forced />
   }
 
   const activeSection = VIEW_SECTION[view] || 'dashboard'

@@ -10,12 +10,12 @@ function loadSession() {
   try {
     const raw = localStorage.getItem(SESSION_KEY)
     if (!raw) return null
-    const { user, loginAt } = JSON.parse(raw)
+    const { user, loginAt, requirePasswordChange } = JSON.parse(raw)
     if (Date.now() - loginAt > SESSION_TTL) {
       localStorage.removeItem(SESSION_KEY)
       return null
     }
-    return user
+    return { user, requirePasswordChange: requirePasswordChange || false }
   } catch {
     return null
   }
@@ -35,7 +35,9 @@ export const ROL_LABELS = {
 
 export function AuthProvider({ children }) {
   const { call } = useApi()
-  const [user, setUser] = useState(() => loadSession())
+  const _session = loadSession()
+  const [user, setUser] = useState(() => _session?.user || null)
+  const [requirePasswordChange, setRequirePasswordChange] = useState(() => _session?.requirePasswordChange || false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -49,8 +51,10 @@ export function AuthProvider({ children }) {
           ? res.usuario.secciones
           : (res.usuario.secciones || '').split(',').filter(Boolean)
         const userData = { ...res.usuario, secciones }
-        localStorage.setItem(SESSION_KEY, JSON.stringify({ user: userData, loginAt: Date.now() }))
+        const rpc = res.requirePasswordChange || false
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ user: userData, loginAt: Date.now(), requirePasswordChange: rpc }))
         setUser(userData)
+        setRequirePasswordChange(rpc)
         return { ok: true }
       } else {
         const errKey = res.error || 'error_desconocido'
@@ -68,8 +72,26 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem(SESSION_KEY)
     setUser(null)
+    setRequirePasswordChange(false)
     setError(null)
   }, [])
+
+  const cambiarPassword = useCallback(async (passwordActual, passwordNueva) => {
+    try {
+      const res = await call({ action: 'cambiarPassword', email: user.email, passwordActual, passwordNueva })
+      if (res.ok) {
+        const raw = localStorage.getItem(SESSION_KEY)
+        if (raw) {
+          const session = JSON.parse(raw)
+          localStorage.setItem(SESSION_KEY, JSON.stringify({ ...session, requirePasswordChange: false }))
+        }
+        setRequirePasswordChange(false)
+      }
+      return res
+    } catch {
+      return { ok: false, error: 'error_conexion' }
+    }
+  }, [call, user])
 
   const canAccess = useCallback((seccion) => {
     if (!user) return false
@@ -84,7 +106,9 @@ export function AuthProvider({ children }) {
       errorLabel: ERROR_LABELS[error] || (error ? ERROR_LABELS.error_desconocido : null),
       login,
       logout,
+      cambiarPassword,
       canAccess,
+      requirePasswordChange,
       isAuthenticated: !!user,
     }}>
       {children}

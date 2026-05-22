@@ -3015,3 +3015,133 @@
   flex-direction: column;
   gap: 8px;
 }
+
+/* ══════════════════════════════════════════
+   CAMBIAR CONTRASEÑA — overlay + modal
+══════════════════════════════════════════ */
+.cp-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.cp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 9999;
+}
+
+.cp-modal-backdrop > div {
+  position: relative;
+}
+
+.cp-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+  z-index: 1;
+  transition: color 0.15s;
+}
+.cp-close-btn:hover { color: var(--navy); }
+
+.cp-card {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 36px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-top: 4px solid var(--red);
+}
+
+.cp-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.cp-forced-notice {
+  background: #FEF3C7;
+  border: 1px solid #FCD34D;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #92400E;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.cp-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.cp-user {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 22px;
+}
+
+.cp-success {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #15803D;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.cp-logout-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0;
+  font-family: inherit;
+  transition: color 0.15s;
+  align-self: center;
+}
+.cp-logout-link:hover { color: var(--red); }
+
+/* ── Sidebar cambiar contraseña ── */
+.sidebar-cambiar-pass-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.sidebar-cambiar-pass-btn:hover {
+  border-color: var(--navy);
+  color: var(--navy);
+}

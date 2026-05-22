@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth, ROL_LABELS } from '../context/AuthContext'
 import { OLAS, FASES, PLATAFORMA_ID, TABLERO_ID } from '../constants'
+import CambiarPassword from './CambiarPassword'
 
 export default function Sidebar({ open, onClose }) {
   const { view, currentCliente, currentOla, clientesInfo, openTracker, openPlataforma, openTablero, openOla, openTableroGeneral, openAssessment, goToDashboard } = useApp()
   const { user, logout, canAccess } = useAuth()
+  const [showCambiarPass, setShowCambiarPass] = useState(false)
 
   const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'
   const rolLabel = user ? (ROL_LABELS[user.rol] || user.rol) : ''
@@ -152,11 +155,17 @@ export default function Sidebar({ open, onClose }) {
               <div className="sidebar-user-rol">{rolLabel}</div>
             </div>
           </div>
+          <button className="sidebar-cambiar-pass-btn" onClick={() => setShowCambiarPass(true)}>
+            Cambiar contraseña
+          </button>
           <button className="sidebar-logout-btn" onClick={handleLogout}>
             Cerrar sesión
           </button>
         </div>
       </nav>
+      {showCambiarPass && (
+        <CambiarPassword onClose={() => setShowCambiarPass(false)} />
+      )}
     </>
   )
 }

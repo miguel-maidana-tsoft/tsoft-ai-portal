@@ -83,6 +83,8 @@ function login(email, password) {
 
   var userEmail = String(email).trim().toLowerCase();
 
+  var changedCol = headers.indexOf('password_changed');
+
   for (var i = 1; i < data.length; i++) {
     var rowEmail = String(data[i][emailCol]).trim().toLowerCase();
     if (rowEmail === userEmail) {
@@ -92,8 +94,12 @@ function login(email, password) {
           .split(',')
           .map(function(s) { return s.trim(); })
           .filter(Boolean);
+        var passwordChanged = changedCol !== -1
+          ? (data[i][changedCol] === true || data[i][changedCol] === 'TRUE' || data[i][changedCol] === 1)
+          : false;
         return {
           ok: true,
+          requirePasswordChange: !passwordChanged,
           usuario: {
             email:    data[i][emailCol],
             nombre:   data[i][nombreCol],
@@ -104,6 +110,34 @@ function login(email, password) {
       } else {
         return { ok: false, error: 'contrasena_incorrecta' };
       }
+    }
+  }
+  return { ok: false, error: 'usuario_no_encontrado' };
+}
+
+function cambiarPassword(email, passwordActual, passwordNueva) {
+  var sheet = getUsuariosSheet();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var emailCol    = headers.indexOf('email');
+  var passwordCol = headers.indexOf('password');
+  var changedCol  = headers.indexOf('password_changed');
+
+  if (changedCol === -1) {
+    changedCol = headers.length;
+    sheet.getRange(1, changedCol + 1).setValue('password_changed');
+  }
+
+  var userEmail = String(email).trim().toLowerCase();
+  for (var i = 1; i < data.length; i++) {
+    var rowEmail = String(data[i][emailCol]).trim().toLowerCase();
+    if (rowEmail === userEmail) {
+      if (String(data[i][passwordCol]) !== String(passwordActual)) {
+        return { ok: false, error: 'contrasena_incorrecta' };
+      }
+      sheet.getRange(i + 1, passwordCol + 1).setValue(passwordNueva);
+      sheet.getRange(i + 1, changedCol + 1).setValue(true);
+      return { ok: true };
     }
   }
   return { ok: false, error: 'usuario_no_encontrado' };
@@ -832,6 +866,8 @@ function doGet(e) {
     // AUTENTICACIÓN
     case 'login':
       result = login(e.parameter.email, e.parameter.password); break;
+    case 'cambiarPassword':
+      result = cambiarPassword(e.parameter.email, e.parameter.passwordActual, e.parameter.passwordNueva); break;
 
     // DATOS
     case 'getTareas':
