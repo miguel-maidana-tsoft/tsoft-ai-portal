@@ -41,7 +41,7 @@ export default function Dashboard() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Dashboard · Ola 1</div>
+          <div className="page-title">Dashboard</div>
           <div className="page-subtitle">Estado general del programa — Argentina 2026</div>
         </div>
       </div>

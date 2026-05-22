@@ -196,17 +196,20 @@ function getResumenGeneral() {
   var sheet = getChecklistClienteSheet();
   var data = sheet.getDataRange().getValues();
   var resumen = {};
+  var todosLosClientes = Object.keys(OLA_CONFIG).reduce(function(acc, olaId) {
+    return acc.concat(OLA_CONFIG[olaId].clientes);
+  }, []);
   if (data.length <= 1) {
-    OLA_CONFIG['Ola 1'].clientes.forEach(function(c) {
+    todosLosClientes.forEach(function(c) {
       resumen[c] = { total: 0, completados: 0, pct: 0 };
     });
     return resumen;
   }
   var headers = data[0];
-  var clienteCol   = headers.indexOf('cliente');
+  var clienteCol    = headers.indexOf('cliente');
   var completadoCol = headers.indexOf('completado');
   var rows = data.slice(1).filter(function(r) { return r[0] !== ''; });
-  OLA_CONFIG['Ola 1'].clientes.forEach(function(cliente) {
+  todosLosClientes.forEach(function(cliente) {
     var items = rows.filter(function(r) { return String(r[clienteCol]) === cliente; });
     var total = items.length;
     var completados = items.filter(function(r) {

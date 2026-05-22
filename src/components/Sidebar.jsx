@@ -8,6 +8,7 @@ export default function Sidebar({ open, onClose }) {
   const { view, currentCliente, currentOla, clientesInfo, openTracker, openPlataforma, openTablero, openOla, openTableroGeneral, openAssessment, goToDashboard } = useApp()
   const { user, logout, canAccess } = useAuth()
   const [showCambiarPass, setShowCambiarPass] = useState(false)
+  const [collapsedOlas, setCollapsedOlas] = useState({})
 
   const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'
   const rolLabel = user ? (ROL_LABELS[user.rol] || user.rol) : ''
@@ -87,36 +88,49 @@ export default function Sidebar({ open, onClose }) {
         {showOlas && (
           <>
             <div className="sidebar-separator" />
-            {OLAS.filter((o) => o.clientes.length > 0).map((ola) => (
-              <div className="sidebar-section" key={ola.id}>
-                <div className="sidebar-label">{ola.label}</div>
-                {showTablero && (
+            {OLAS.filter((o) => o.clientes.length > 0).map((ola) => {
+              const isCollapsed = !!collapsedOlas[ola.id]
+              return (
+                <div className="sidebar-section" key={ola.id}>
                   <div
-                    className={`nav-item ${view === 'ola' && currentOla === ola.id ? 'active' : ''}`}
-                    onClick={() => handleOlaClick(ola.id)}
+                    className="sidebar-label sidebar-label--collapsible"
+                    onClick={() => setCollapsedOlas((p) => ({ ...p, [ola.id]: !p[ola.id] }))}
                   >
-                    <span className="dot" /> Tablero de Seguimiento
+                    {ola.label}
+                    <span className={`sidebar-chevron ${isCollapsed ? 'sidebar-chevron--closed' : ''}`}>▾</span>
                   </div>
-                )}
-                {ola.clientes.map((cliente) => {
-                  const faseLabel = getFaseLabel(cliente)
-                  const isActive = view === 'tracker' && currentCliente === cliente
-                  return (
-                    <div
-                      key={cliente}
-                      className={`nav-item ${isActive ? 'active' : ''}`}
-                      onClick={() => handleClienteClick(cliente, ola.id)}
-                    >
-                      <span className="dot" />
-                      <span className="nav-item-text">{cliente}</span>
-                      {faseLabel && (
-                        <span className="nav-fase-badge">{faseLabel}</span>
+                  {!isCollapsed && (
+                    <>
+                      {showTablero && (
+                        <div
+                          className={`nav-item ${view === 'ola' && currentOla === ola.id ? 'active' : ''}`}
+                          onClick={() => handleOlaClick(ola.id)}
+                        >
+                          <span className="dot" /> Tablero de Seguimiento
+                        </div>
                       )}
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
+                      {ola.clientes.map((cliente) => {
+                        const faseLabel = getFaseLabel(cliente)
+                        const isActive = view === 'tracker' && currentCliente === cliente
+                        return (
+                          <div
+                            key={cliente}
+                            className={`nav-item ${isActive ? 'active' : ''}`}
+                            onClick={() => handleClienteClick(cliente, ola.id)}
+                          >
+                            <span className="dot" />
+                            <span className="nav-item-text">{cliente}</span>
+                            {faseLabel && (
+                              <span className="nav-fase-badge">{faseLabel}</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </>
+                  )}
+                </div>
+              )
+            })}
           </>
         )}
 

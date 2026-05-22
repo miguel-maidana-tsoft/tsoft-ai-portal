@@ -1,12 +1,7 @@
-import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-import { FASES, PLATAFORMA_ID } from '../constants'
 
 export default function Topbar({ onMenuToggle }) {
-  const { currentOla, currentFase, view } = useApp()
   const { user } = useAuth()
-  const fase = FASES.find((f) => f.id === currentFase)
-  const isPlataforma = currentOla === PLATAFORMA_ID
   const initial = user?.nombre ? user.nombre.charAt(0).toUpperCase() : '?'
 
   return (
@@ -22,16 +17,6 @@ export default function Topbar({ onMenuToggle }) {
         <div className="topbar-subtitle">AI Program · Portal de Seguimiento</div>
       </div>
       <div className="topbar-meta">
-        {isPlataforma ? (
-          <span className="badge-ola" style={{ background: 'var(--blue)' }}>PLATAFORMA</span>
-        ) : (
-          <span className="badge-ola">{currentOla.toUpperCase()}</span>
-        )}
-        {!isPlataforma && fase && view !== 'dashboard' && (
-          <span className="badge-fase">
-            {fase.nombre} · {fase.periodo}
-          </span>
-        )}
         {user && (
           <div className="topbar-user">
             <span className="topbar-user-avatar">{initial}</span>
