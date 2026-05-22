@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import Spinner from '../Spinner'
 
+
 const ESTADOS = ['Pendiente', 'En curso', 'Bloqueado', 'Completado']
 
 const ESTADO_SLUG = {
@@ -12,7 +13,7 @@ const ESTADO_SLUG = {
 }
 
 // ── Fila de tarea ────────────────────────────────────────────
-function TareaRow({ tarea, onEstado, onActualizar, onEliminar }) {
+function TareaRow({ tarea, onEstado, onActualizar, onEliminar, dragHandlers, isDragOver, isDragging }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ texto: tarea.texto, descripcion: tarea.descripcion || '' })
   const [saving, setSaving] = useState(false)
@@ -67,7 +68,21 @@ function TareaRow({ tarea, onEstado, onActualizar, onEliminar }) {
   }
 
   return (
-    <div className={`tg-row tg-row--${slug} ${tarea._saving ? 'tg-row--saving' : ''}`}>
+    <div
+      className={[
+        'tg-row',
+        `tg-row--${slug}`,
+        tarea._saving ? 'tg-row--saving'    : '',
+        isDragOver    ? 'tg-row--drag-over' : '',
+        isDragging    ? 'tg-row--dragging'  : '',
+      ].filter(Boolean).join(' ')}
+      draggable
+      onDragStart={dragHandlers.onDragStart}
+      onDragOver={dragHandlers.onDragOver}
+      onDrop={dragHandlers.onDrop}
+      onDragEnd={dragHandlers.onDragEnd}
+    >
+      <span className="tt-drag-handle" title="Arrastrar para reordenar">⠿</span>
       <select
         className={`tt-estado-select tt-estado-select--${slug}`}
         value={tarea.estado}
@@ -126,8 +141,27 @@ function AddForm({ onAdd, onCancel }) {
 
 // ── Tablero General PM ───────────────────────────────────────
 export default function TableroGeneral() {
-  const { tareasGenerales, loadTareasGenerales, agregarTareaGeneral, actualizarTareaGeneral, eliminarTareaGeneral } = useApp()
+  const { tareasGenerales, loadTareasGenerales, agregarTareaGeneral, actualizarTareaGeneral, eliminarTareaGeneral, reordenarTareasGenerales } = useApp()
   const [addOpen, setAddOpen] = useState(false)
+  const [dragOverId, setDragOverId] = useState(null)
+  const dragId = useRef(null)
+
+  function handleDragStart(id) { dragId.current = id }
+  function handleDragOver(e, id) { e.preventDefault(); if (dragId.current !== id) setDragOverId(id) }
+  function handleDrop(e, targetId) {
+    e.preventDefault()
+    const sourceId = dragId.current
+    if (!sourceId || sourceId === targetId) { setDragOverId(null); return }
+    const list = [...(tareasGenerales || [])]
+    const fromIdx = list.findIndex((t) => t.id === sourceId)
+    const toIdx   = list.findIndex((t) => t.id === targetId)
+    const [moved] = list.splice(fromIdx, 1)
+    list.splice(toIdx, 0, moved)
+    reordenarTareasGenerales(list.map((t) => t.id))
+    dragId.current = null
+    setDragOverId(null)
+  }
+  function handleDragEnd() { dragId.current = null; setDragOverId(null) }
 
   useEffect(() => {
     if (tareasGenerales === null) loadTareasGenerales()
@@ -180,6 +214,14 @@ export default function TableroGeneral() {
                 onEstado={(id, estado) => actualizarTareaGeneral(id, 'estado', estado)}
                 onActualizar={actualizarTareaGeneral}
                 onEliminar={eliminarTareaGeneral}
+                isDragOver={dragOverId === t.id}
+                isDragging={dragId.current === t.id}
+                dragHandlers={{
+                  onDragStart: () => handleDragStart(t.id),
+                  onDragOver:  (e) => handleDragOver(e, t.id),
+                  onDrop:      (e) => handleDrop(e, t.id),
+                  onDragEnd:   handleDragEnd,
+                }}
               />
             ))}
           </div>

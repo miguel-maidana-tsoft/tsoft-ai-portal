@@ -590,13 +590,18 @@ function getTareasGenerales() {
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return [];
   var headers = data[0];
-  return data.slice(1)
+  var ordenCol = headers.indexOf('orden');
+  var rows = data.slice(1)
     .filter(function(row) { return row[0] !== ''; })
     .map(function(row) {
       var obj = {};
       headers.forEach(function(h, i) { obj[h] = row[i]; });
       return obj;
     });
+  if (ordenCol !== -1) {
+    rows.sort(function(a, b) { return (Number(a.orden) || 0) - (Number(b.orden) || 0); });
+  }
+  return rows;
 }
 
 function agregarTareaGeneral(texto, descripcion) {
@@ -633,6 +638,31 @@ function eliminarTareaGeneral(id) {
     }
   }
   return { success: false };
+}
+
+function reordenarTareasGenerales(orderedIds) {
+  var sheet = getTareasGeneralesSheet();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0];
+  var idCol = headers.indexOf('id');
+  var ordenCol = headers.indexOf('orden');
+  if (ordenCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('orden');
+    data = sheet.getDataRange().getValues();
+    headers = data[0];
+    ordenCol = headers.indexOf('orden');
+  }
+  var ids = String(orderedIds).split(',');
+  ids.forEach(function(id, index) {
+    var trimmedId = String(id).trim();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]) === trimmedId) {
+        sheet.getRange(i + 1, ordenCol + 1).setValue(index + 1);
+        break;
+      }
+    }
+  });
+  return { success: true };
 }
 
 // ============================================================
@@ -920,6 +950,8 @@ function doGet(e) {
       result = actualizarTareaGeneral(e.parameter.id, e.parameter.campo, e.parameter.valor); break;
     case 'eliminarTareaGeneral':
       result = eliminarTareaGeneral(e.parameter.id); break;
+    case 'reordenarTareasGenerales':
+      result = reordenarTareasGenerales(e.parameter.orderedIds); break;
 
     // PLATAFORMA TAREAS GENERALES
     case 'getPlataformaTareas':

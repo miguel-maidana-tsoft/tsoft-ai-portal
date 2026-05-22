@@ -186,6 +186,14 @@ export function AppProvider({ children }) {
     await call({ action: 'eliminarTareaGeneral', id })
   }, [call])
 
+  const reordenarTareasGenerales = useCallback((orderedIds) => {
+    setTareasGenerales((prev) => {
+      const map = Object.fromEntries((prev || []).map((t) => [t.id, t]))
+      return orderedIds.map((id) => map[id]).filter(Boolean)
+    })
+    call({ action: 'reordenarTareasGenerales', orderedIds: orderedIds.join(',') })
+  }, [call])
+
   // ── Plataforma: Tareas Generales ──────────────────────────
   const loadPlataformaTareas = useCallback(async () => {
     const data = await call({ action: 'getPlataformaTareas' })
@@ -386,6 +394,7 @@ export function AppProvider({ children }) {
         agregarTareaGeneral,
         actualizarTareaGeneral,
         eliminarTareaGeneral,
+        reordenarTareasGenerales,
         // Plataforma Tareas Generales
         loadPlataformaTareas,
         agregarPlataformaTarea,
