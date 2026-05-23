@@ -95,6 +95,11 @@ function TareaRow({ tarea, onEstado, onActualizar, onEliminar, dragHandlers, isD
         {tarea.descripcion && <div className="tg-descripcion">{tarea.descripcion}</div>}
       </div>
       <div className="tg-actions">
+        {tarea.fecha_creacion && (
+          <span className="tg-fecha">
+            {new Date(tarea.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
+        )}
         <button className="tt-btn-icon" onClick={handleOpen} title="Editar">✎</button>
         <button className="tt-btn-icon tt-btn-del" onClick={() => onEliminar(tarea.id)} title="Eliminar">×</button>
       </div>

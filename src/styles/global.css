@@ -3032,6 +3032,12 @@
   gap: 5px;
   flex-shrink: 0;
 }
+.tg-fecha {
+  font-size: 11px;
+  color: var(--muted);
+  margin-right: 6px;
+  white-space: nowrap;
+}
 
 .tg-edit-wrap {
   padding: 14px 20px;
