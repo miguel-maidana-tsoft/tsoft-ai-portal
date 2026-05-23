@@ -993,6 +993,10 @@ function doGet(e) {
     case 'reordenarChecklist':
       result = reordenarChecklist(e.parameter.orderedIds); break;
 
+    // QUIZ CHAMPIONS
+    case 'registrarQuizResult':
+      result = registrarQuizResult(e.parameter); break;
+
     default:
       result = { error: 'Accion no reconocida: ' + action };
   }
@@ -1006,6 +1010,57 @@ function doGet(e) {
   return ContentService
     .createTextOutput(json)
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+// QUIZ CHAMPIONS — Sheet: Quiz_Champions (solo escritura)
+// Puramente aditivo — no toca ninguna función existente
+// ============================================================
+function getQuizChampionsSheet() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName('Quiz_Champions');
+  if (!sheet) {
+    sheet = ss.insertSheet('Quiz_Champions');
+    sheet.appendRow([
+      'timestamp','nombre','rol',
+      'score_quiz','score_ex1','score_ex2','score_ex3','score_total','nivel',
+      'ex1_rol','ex1_model','ex1_tools',
+      'ex2_platform','ex2_tools','ex2_mcp',
+      'ex3_orch','ex3_sub','ex3_figma','ex3_skills'
+    ]);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function registrarQuizResult(params) {
+  try {
+    var sheet = getQuizChampionsSheet();
+    sheet.appendRow([
+      new Date().toISOString(),
+      params.nombre      || '',
+      params.rol         || '',
+      Number(params.score_quiz)  || 0,
+      Number(params.score_ex1)   || 0,
+      Number(params.score_ex2)   || 0,
+      Number(params.score_ex3)   || 0,
+      Number(params.score_total) || 0,
+      params.nivel       || '',
+      params.ex1_rol     || '',
+      params.ex1_model   || '',
+      params.ex1_tools   || '',
+      params.ex2_platform|| '',
+      params.ex2_tools   || '',
+      params.ex2_mcp     || '',
+      params.ex3_orch    || '',
+      params.ex3_sub     || '',
+      params.ex3_figma   || '',
+      params.ex3_skills  || '',
+    ]);
+    return { status: 'ok' };
+  } catch(err) {
+    return { status: 'error', error: err.toString() };
+  }
 }
 
 function doPost(e) {
