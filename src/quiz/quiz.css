@@ -73,7 +73,7 @@ body::before {
 .quiz-screen {
   position: relative; z-index: 5;
   max-width: 700px; margin: 0 auto;
-  padding: 2.5rem 2rem 5rem;
+  padding: 1.5rem 2rem 3rem;
   animation: qFadeUp 0.4s ease both;
 }
 
@@ -268,7 +268,7 @@ body::before {
 }
 
 /* ── STEP DOTS ── */
-.step-dots { display: flex; gap: 8px; margin-bottom: 1.8rem; }
+.step-dots { display: flex; gap: 8px; margin-bottom: 1.2rem; }
 .step-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: rgba(255,255,255,0.15); transition: all 0.3s;
@@ -279,7 +279,7 @@ body::before {
 /* ── EXERCISE ── */
 .exercise-header {
   display: flex; align-items: flex-start; gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 .exercise-badge {
   flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;
@@ -302,13 +302,28 @@ body::before {
   background: rgba(13,27,62,0.8);
   border-left: 3px solid var(--qred);
   border-radius: 0 8px 8px 0;
-  padding: 1rem 1.2rem; margin-bottom: 1.5rem;
-  font-size: 0.92rem; color: #A0B8CC; line-height: 1.65;
+  padding: 0.85rem 1.1rem; margin-bottom: 1rem;
+  font-size: 0.9rem; color: #A0B8CC; line-height: 1.6;
 }
 .scenario-box strong { color: var(--qwhite); }
 
 /* ── AGENT BUILDER ── */
-.builder-grid { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+.builder-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: start;
+}
+@media (min-width: 601px) {
+  .builder-layout { grid-template-columns: 1.15fr 0.85fr; }
+  .builder-layout > .builder-section {
+    position: sticky;
+    top: 64px;
+    align-self: start;
+  }
+}
+.builder-grid { display: grid; gap: 0.75rem; }
 .builder-section-label {
   font-size: 0.7rem; font-weight: 600; letter-spacing: 2px;
   text-transform: uppercase; color: var(--qmuted);
@@ -350,7 +365,7 @@ body::before {
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 8px; padding: 1rem 1.2rem;
   font-family: 'DM Sans', monospace; font-size: 0.82rem;
-  line-height: 1.8; margin-bottom: 1.5rem;
+  line-height: 1.8; margin-bottom: 0;
   min-height: 100px;
 }
 .preview-line { display: flex; gap: 8px; }
@@ -362,6 +377,27 @@ body::before {
 
 /* ── VALIDATE ROW ── */
 .validate-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+/* ── LAYOUT 2×2 (EX3) ── */
+.builder-grid--2col {
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 1rem;
+}
+.builder-preview-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+@media (min-width: 601px) {
+  .builder-preview-row { grid-template-columns: 1.3fr 0.7fr; }
+}
+.validate-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ── FEEDBACK BOX ── */
 .feedback-box {
@@ -417,13 +453,13 @@ body::before {
 /* ── QUIZ PHASE ── */
 .quiz-meta {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1rem;
 }
 .quiz-counter {
   font-size: 0.7rem; font-weight: 600; letter-spacing: 2px;
   text-transform: uppercase; color: var(--qmuted);
 }
-.q-dots { display: flex; gap: 6px; margin-bottom: 1.6rem; }
+.q-dots { display: flex; gap: 6px; margin-bottom: 1rem; }
 .q-dot-bar {
   height: 6px; border-radius: 3px; flex: 1; transition: all 0.3s;
 }
@@ -582,10 +618,10 @@ body::before {
 
 /* ── STREAK AREA — espacio reservado debajo de quiz-meta ── */
 .q-streak-area {
-  height: 32px;
+  height: 26px;
   display: flex;
   align-items: center;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 .q-streak-badge {
   display: inline-flex;

@@ -22,6 +22,7 @@ export default function QuizPhase({ onDone, onQuestionChange }) {
   const scoresRef   = useRef([])
   const streakRef   = useRef(0)
   const intervalRef = useRef(null)
+  const feedbackRef = useRef(null)
 
   const q = QUESTIONS[idx]
 
@@ -59,6 +60,7 @@ export default function QuizPhase({ onDone, onQuestionChange }) {
   // ── Auto-avance ────────────────────────────────────────────
   useEffect(() => {
     if (!feedback) return
+    setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80)
     const timer = setTimeout(() => {
       const nextIdx = idx + 1
       if (nextIdx >= QUESTIONS.length) {
@@ -208,7 +210,7 @@ export default function QuizPhase({ onDone, onQuestionChange }) {
 
       {/* Feedback con barra de progreso de auto-avance */}
       {feedback && (
-        <div className={`quiz-inline-feedback qfb-${feedback.type}`}>
+        <div ref={feedbackRef} className={`quiz-inline-feedback qfb-${feedback.type}`}>
           <strong>{feedback.label}</strong> — {feedback.text}
           <div
             className="q-auto-progress"

@@ -42,27 +42,27 @@ export const QUESTIONS = [
   },
   {
     type: 'vf',
-    text: '¿Verdadero o Falso?\n\n"Usar Opus 4.6 para todos los agentes del equipo garantiza los mejores resultados."',
+    text: '¿Verdadero o Falso?\n\n"Un agente de revisión de código con Haiku 4.5 bien configurado puede rendir igual o mejor que el mismo agente con Opus 4.6."',
     options: ['Verdadero', 'Falso'],
-    correct: 1,
+    correct: 0,
     feedback: {
-      ok:   'Correcto, es Falso. Un agente de revisión de código rutinaria con Haiku 4.5 rinde igual o mejor que con Opus, a ~0.20x del costo. Opus tiene sentido para análisis arquitectónico crítico — no para tareas repetitivas.',
-      fail: 'Es Falso. Un agente focalizado en una tarea específica (revisar código, formatear, validar) rinde igual o mejor con Haiku 4.5 a una fracción del costo. Usar el modelo más grande para todo es costoso y no mejora los resultados.',
+      ok:   'Exacto. Para tareas mecánicas y repetitivas, el modelo grande no agrega valor real. Haiku 4.5 corre a ~0.20x del costo de Opus y en code review estructurado el resultado es equivalente — o mejor, porque responde más rápido con menos overhead.',
+      fail: 'En tareas estructuradas y repetitivas la clave no es el modelo más grande, sino el más adecuado. Haiku 4.5 es ideal para code review rutinario — reservá Opus para análisis arquitectónico crítico o razonamiento complejo.',
     },
   },
   {
     type: 'mc',
-    text: 'Un agente tiene que formatear automáticamente cientos de archivos JSON según un esquema fijo. ¿Qué modelo conviene usar?',
+    text: 'Un agente está a punto de ejecutar un script que borra 500 registros de producción como parte de una limpieza automática. ¿Qué deberías haber diseñado?',
     options: [
-      'Opus 4.6 — para asegurar la mayor precisión posible',
-      'Sonnet 4.6 — es el modelo estándar del equipo',
-      'Haiku 4.5 — tarea repetitiva y focalizada, no requiere razonamiento complejo',
-      'Cualquiera da lo mismo para tareas de formateo',
+      'Que el agente proceda solo — para eso se automatiza',
+      'Logs detallados después de la operación',
+      'Un retry automático si algo falla',
+      'Un paso de aprobación humana antes de acciones destructivas',
     ],
-    correct: 2,
+    correct: 3,
     feedback: {
-      ok:   'Perfecto. Haiku 4.5 es ideal para tareas mecánicas y repetitivas como formateo masivo. Costo ~0.33x comparado con Sonnet, mismo resultado. Reservás Sonnet para planificación y razonamiento, Opus para decisiones críticas.',
-      fail: 'Para una tarea mecánica y repetitiva como formatear archivos JSON, Haiku 4.5 es la respuesta correcta. No requiere razonamiento complejo — y el ahorro de costo es real: ~0.33x vs Sonnet. Usar Opus o Sonnet aquí es desperdicio.',
+      ok:   'Exacto. Acciones irreversibles como borrar datos de producción requieren un paso de aprobación humana. La autonomía del agente tiene límites: cuanto mayor el impacto y menor la reversibilidad, más importante es el "human in the loop".',
+      fail: 'La respuesta correcta es el paso de aprobación humana. Un agente autónomo no debería ejecutar acciones destructivas o irreversibles sin confirmación explícita — los logs o retries no evitan el daño, solo lo registran o repiten.',
     },
   },
 ]
@@ -259,12 +259,13 @@ export const EX3 = {
   num: 3,
   title: 'El Ecosistema Orquestado',
   difficulty: 'hard',
+  sectionsLayout: '2col',
   scenario:
-    'Un arquitecto de soluciones necesita diseñar un flujo multi-agente para el onboarding de una nueva feature en un cliente bancario. El flujo es: <strong>Sonnet planifica → sub-agentes de Haiku implementan en paralelo → un agente final valida contra los diseños de Figma</strong>. ¿Qué piezas hay que configurar?',
+    'Un arquitecto de soluciones necesita diseñar un flujo multi-agente para el onboarding de una nueva feature en un cliente bancario. El flujo es: <strong>un agente orquestador planifica → sub-agentes implementan en paralelo → un agente validador contrasta contra los diseños de Figma</strong>. Elegí el modelo correcto para cada rol y configurá el acceso a Figma y la carga de skills.',
   sections: [
     {
       key: 'orch',
-      label: 'Modelo del orquestador',
+      label: 'Modelo del orquestador (Sonnet)',
       type: 'single',
       options: [
         { val: 'haiku',  label: 'Haiku 4.5 — más barato' },
@@ -274,7 +275,7 @@ export const EX3 = {
     },
     {
       key: 'sub',
-      label: 'Modelo de los sub-agentes de implementación',
+      label: 'Modelo de los sub-agentes',
       type: 'single',
       options: [
         { val: 'haiku',  label: 'Haiku 4.5 — tareas focalizadas' },
@@ -284,7 +285,7 @@ export const EX3 = {
     },
     {
       key: 'figma',
-      label: '¿Cómo accede el agente validador a Figma?',
+      label: 'Acceso a Figma (agente validador)',
       type: 'single',
       options: [
         { val: 'manual', label: 'Le paso el link manualmente en el prompt' },
@@ -295,7 +296,7 @@ export const EX3 = {
     },
     {
       key: 'skills',
-      label: '¿Cuándo cargan sus skills los sub-agentes?',
+      label: 'Carga de skills (sub-agentes)',
       type: 'single',
       options: [
         { val: 'inicio',  label: 'Al inicio, todas precargadas en el frontmatter' },

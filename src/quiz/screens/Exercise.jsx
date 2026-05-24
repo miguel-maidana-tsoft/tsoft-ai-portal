@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const DIFF_CLASS = { easy: 'tag-easy', medium: 'tag-medium', hard: 'tag-hard' }
 const DIFF_LABEL = { easy: 'Básico',   medium: 'Intermedio', hard: 'Avanzado' }
@@ -67,6 +67,10 @@ export default function Exercise({ exDef, totalExercises = 3, onScore }) {
   const [validated, setValidated] = useState(false)
   const [result, setResult]       = useState(null)
 
+  const validateRef  = useRef(null)
+  const feedbackRef  = useRef(null)
+  const prevReadyRef = useRef(false)
+
   const num   = exDef.num
   const ready = exDef.isReady(sel)
   const isLast = num === totalExercises
@@ -79,6 +83,20 @@ export default function Exercise({ exDef, totalExercises = 3, onScore }) {
     }, AUTO_DELAY)
     return () => clearTimeout(timer)
   }, [validated]) // eslint-disable-line
+
+  // Scroll al botón validar cuando se completan todas las selecciones
+  useEffect(() => {
+    if (ready && !prevReadyRef.current && !validated) {
+      setTimeout(() => validateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120)
+    }
+    prevReadyRef.current = ready
+  }, [ready, validated])
+
+  // Scroll al feedback tras validar
+  useEffect(() => {
+    if (!validated || !feedbackRef.current) return
+    setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150)
+  }, [validated])
 
   function toggleChip(key, val, isMulti) {
     setSel((prev) => {
@@ -100,10 +118,37 @@ export default function Exercise({ exDef, totalExercises = 3, onScore }) {
     const res = exDef.validate(sel)
     setResult(res)
     setValidated(true)
-    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
   }
 
-  const previewLines = exDef.getPreview(sel)
+  const previewLines  = exDef.getPreview(sel)
+  const is2col        = exDef.sectionsLayout === '2col'
+
+  const sectionChips = exDef.sections.map((section) => (
+    <div key={section.key} className="builder-section">
+      <div className="builder-section-label">
+        <div className="req-dot" />
+        {section.label}
+      </div>
+      <div className="options-row">
+        {section.options.map((opt) => {
+          const isMulti    = section.type === 'multi'
+          const isSelected = isMulti
+            ? (sel[section.key] || []).includes(opt.val)
+            : sel[section.key] === opt.val
+          return (
+            <div
+              key={opt.val}
+              className={`option-chip${isMulti ? ' multi' : ''}${isSelected ? ' selected' : ''}`}
+              onClick={() => !validated && toggleChip(section.key, opt.val, isMulti)}
+              style={validated ? { cursor: 'default', pointerEvents: 'none' } : undefined}
+            >
+              {opt.label}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  ))
 
   return (
     <div className="quiz-screen">
@@ -129,54 +174,55 @@ export default function Exercise({ exDef, totalExercises = 3, onScore }) {
       {/* Scenario */}
       <div className="scenario-box" dangerouslySetInnerHTML={{ __html: `<strong>Escenario:</strong> ${exDef.scenario}` }} />
 
-      {/* Builder sections */}
-      <div className="builder-grid">
-        {exDef.sections.map((section) => (
-          <div key={section.key} className="builder-section">
-            <div className="builder-section-label">
-              <div className="req-dot" />
-              {section.label}
-            </div>
-            <div className="options-row">
-              {section.options.map((opt) => {
-                const isMulti    = section.type === 'multi'
-                const isSelected = isMulti
-                  ? (sel[section.key] || []).includes(opt.val)
-                  : sel[section.key] === opt.val
-                return (
-                  <div
-                    key={opt.val}
-                    className={`option-chip${isMulti ? ' multi' : ''}${isSelected ? ' selected' : ''}`}
-                    onClick={() => !validated && toggleChip(section.key, opt.val, isMulti)}
-                    style={validated ? { cursor: 'default', pointerEvents: 'none' } : undefined}
-                  >
-                    {opt.label}
-                  </div>
-                )
-              })}
-            </div>
+      {is2col ? (
+        /* Layout 2×2: secciones en grilla 2 col + fila preview/validar */
+        <>
+          <div className="builder-grid builder-grid--2col">
+            {sectionChips}
           </div>
-        ))}
 
-        <AgentPreview lines={previewLines} title={exDef.previewTitle} />
-      </div>
+          <div className="builder-preview-row">
+            <AgentPreview lines={previewLines} title={exDef.previewTitle} />
+            {!validated && (
+              <div className="validate-col" ref={validateRef}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleValidate}
+                  disabled={!ready}
+                >
+                  Validar configuración
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        /* Layout normal: secciones izquierda | preview derecha */
+        <>
+          <div className="builder-layout">
+            <div className="builder-grid">{sectionChips}</div>
+            <AgentPreview lines={previewLines} title={exDef.previewTitle} />
+          </div>
 
-      {/* Validate button */}
-      {!validated && (
-        <div className="validate-row">
-          <button
-            className="btn btn-primary"
-            onClick={handleValidate}
-            disabled={!ready}
-          >
-            Validar configuración
-          </button>
-        </div>
+          {!validated && (
+            <div className="validate-row" ref={validateRef}>
+              <button
+                className="btn btn-primary"
+                onClick={handleValidate}
+                disabled={!ready}
+              >
+                Validar configuración
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Feedback con auto-avance */}
       {validated && result && (
-        <FeedbackBox score={result.score} maxScore={3} details={result.details} />
+        <div ref={feedbackRef}>
+          <FeedbackBox score={result.score} maxScore={3} details={result.details} />
+        </div>
       )}
     </div>
   )
