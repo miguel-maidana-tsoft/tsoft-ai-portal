@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         quiz: resolve(__dirname, 'champions-quiz.html'),
+        assessment: resolve(__dirname, 'assessment.html'),
       },
     },
   },
