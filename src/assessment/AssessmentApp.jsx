@@ -69,7 +69,7 @@ export default function AssessmentApp() {
       <header className="as-header">
         <div className="as-header-inner">
           <div className="as-logo">TSOFT<span>›</span></div>
-          <div className="as-header-badge">AI ADOPTION PROGRAM · 2026</div>
+          <div className="as-header-badge">AI ADOPTION PROGRAM · NIVELACIÓN 2026</div>
           {progress ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span className="as-progress-label">{progress.label}</span>
