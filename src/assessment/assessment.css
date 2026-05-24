@@ -40,11 +40,9 @@ body::before {
   display: flex; align-items: center;
 }
 .as-header-inner {
-  max-width: 580px; margin: 0 auto; width: 100%;
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-}
-.as-header-inner > *:last-child {
-  display: flex; align-items: center; justify-content: flex-end;
+  max-width: 860px; margin: 0 auto; width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1.5rem;
 }
 .as-logo {
   font-family: 'Syne', sans-serif;
@@ -56,6 +54,14 @@ body::before {
 .as-header-badge {
   font-size: 0.62rem; font-weight: 500;
   color: var(--as-muted); letter-spacing: 2px; text-transform: uppercase;
+  white-space: nowrap;
+}
+.as-header-tag {
+  font-size: 0.62rem; font-weight: 600;
+  color: var(--as-red); letter-spacing: 1.5px; text-transform: uppercase;
+  border: 1px solid rgba(200,16,46,0.35);
+  padding: 3px 8px; border-radius: 4px;
+  text-align: right;
 }
 .as-progress-label { font-size: 0.72rem; color: var(--as-muted); }
 .as-progress-bar-wrap {
@@ -71,7 +77,7 @@ body::before {
 .as-screen {
   position: relative; z-index: 5;
   max-width: 680px; margin: 0 auto;
-  padding: 2rem 2rem 4rem;
+  padding: 1.4rem 2rem 2rem;
   animation: asFadeUp 0.35s ease both;
 }
 .as-screen--wide { max-width: 760px; }
@@ -88,26 +94,26 @@ body::before {
 }
 .as-h1 {
   font-family: 'Syne', sans-serif;
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-size: clamp(2.2rem, 4.5vw, 2.8rem);
   font-weight: 800; line-height: 1.1;
   color: var(--as-white); margin-bottom: 0.7rem;
 }
 .as-h2 {
   font-family: 'Syne', sans-serif;
-  font-size: 1.3rem; font-weight: 700;
+  font-size: 1.35rem; font-weight: 700;
   color: var(--as-white); margin-bottom: 0.3rem;
 }
 .as-subtitle {
-  font-size: 0.92rem; color: #8099BB; line-height: 1.6;
-  margin-bottom: 1.8rem;
+  font-size: 0.95rem; color: #8099BB; line-height: 1.6;
+  margin-bottom: 1.2rem;
 }
 .as-block-sub {
   font-size: 0.88rem; color: var(--as-muted);
-  margin-bottom: 1.2rem; line-height: 1.5;
+  margin-bottom: 0.75rem; line-height: 1.5;
 }
 .as-red-line {
   width: 44px; height: 3px;
-  background: var(--as-red); margin: 0.8rem 0 1.2rem;
+  background: var(--as-red); margin: 0.5rem 0 0.8rem;
 }
 
 /* ── BADGE ── */
@@ -142,7 +148,7 @@ body::before {
 }
 .as-field-hint { font-size: 0.75rem; color: var(--as-muted); margin-top: 0.4rem; line-height: 1.5; }
 .as-input {
-  width: 100%; font-size: 0.88rem; font-family: 'DM Sans', sans-serif;
+  width: 100%; font-size: 0.95rem; font-family: 'DM Sans', sans-serif;
   padding: 0.65rem 0.9rem; border-radius: 8px;
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--as-border);
@@ -176,7 +182,7 @@ body::before {
 /* ── NAV ── */
 .as-nav {
   display: flex; justify-content: space-between; align-items: center;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 /* ── MODE GRID ── */
@@ -213,16 +219,16 @@ body::before {
 /* ── QUESTION CARD ── */
 .as-q-card {
   background: var(--as-card); border: 1px solid var(--as-border);
-  border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 0.75rem;
+  border-radius: 12px; padding: 0.8rem 1rem; margin-bottom: 0.5rem;
   transition: border-color 0.2s;
 }
 .as-q-card.answered { border-color: rgba(200,16,46,0.3); }
-.as-q-num  { font-size: 0.7rem; color: var(--as-muted); font-family: 'DM Mono', monospace; margin-bottom: 0.4rem; }
-.as-q-text { font-size: 0.92rem; font-weight: 500; color: var(--as-white); margin-bottom: 0.9rem; line-height: 1.5; }
-.as-options { display: flex; flex-direction: column; gap: 0.4rem; }
+.as-q-num  { font-size: 0.7rem; color: var(--as-muted); font-family: 'DM Mono', monospace; margin-bottom: 0.3rem; }
+.as-q-text { font-size: 0.92rem; font-weight: 500; color: var(--as-white); margin-bottom: 0.6rem; line-height: 1.5; }
+.as-options { display: flex; flex-direction: column; gap: 0.3rem; }
 .as-opt {
   display: flex; align-items: flex-start; gap: 0.6rem;
-  padding: 0.6rem 0.9rem; border-radius: 8px;
+  padding: 0.45rem 0.75rem; border-radius: 8px;
   border: 1px solid var(--as-border); cursor: pointer;
   transition: all 0.15s; background: rgba(255,255,255,0.02);
 }
@@ -305,20 +311,20 @@ body::before {
 /* ── RESULTS ── */
 .as-result-card {
   background: var(--as-card); border: 1px solid var(--as-border);
-  border-radius: 14px; padding: 1.8rem 1.6rem;
-  text-align: center; margin-bottom: 1rem;
+  border-radius: 14px; padding: 1.2rem 1.4rem;
+  text-align: center; margin-bottom: 0.8rem;
 }
 .as-result-level {
   display: inline-block;
-  font-family: 'DM Mono', monospace; font-size: 3.2rem; font-weight: 700;
-  line-height: 1; padding: 0.5rem 1.4rem; border-radius: 12px;
-  margin-bottom: 0.6rem;
+  font-family: 'DM Mono', monospace; font-size: 2.4rem; font-weight: 700;
+  line-height: 1; padding: 0.4rem 1.1rem; border-radius: 12px;
+  margin-bottom: 0.4rem;
 }
 .as-result-name {
-  font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700;
-  color: var(--as-white); margin-bottom: 0.4rem;
+  font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700;
+  color: var(--as-white); margin-bottom: 0.3rem;
 }
-.as-result-desc { font-size: 0.88rem; color: #8099BB; line-height: 1.6; margin-bottom: 1.2rem; }
+.as-result-desc { font-size: 0.88rem; color: #8099BB; line-height: 1.6; margin-bottom: 0.8rem; }
 .as-score-bar-bg {
   height: 6px; background: rgba(255,255,255,0.1);
   border-radius: 3px; overflow: hidden; margin: 0.4rem 0;
@@ -341,7 +347,7 @@ body::before {
 .as-pip-lbl { font-size: 0.65rem; color: var(--as-muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
 .as-blocks-grid {
   display: grid; grid-template-columns: 1fr 1fr;
-  gap: 0.6rem; margin: 1rem 0; text-align: left;
+  gap: 0.5rem; margin: 0.6rem 0; text-align: left;
 }
 .as-block-card {
   background: rgba(255,255,255,0.04); border: 1px solid var(--as-border);
@@ -352,7 +358,7 @@ body::before {
 .as-block-max   { font-size: 0.75rem; color: var(--as-muted); }
 .as-next-steps {
   background: rgba(200,16,46,0.08); border: 1px solid rgba(200,16,46,0.2);
-  border-radius: 10px; padding: 1rem 1.2rem; text-align: left; margin-top: 1rem;
+  border-radius: 10px; padding: 0.8rem 1rem; text-align: left; margin-top: 0.7rem;
 }
 .as-next-title { font-size: 0.7rem; font-weight: 700; color: #F07090; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; }
 .as-next-item  { font-size: 0.85rem; color: #D0A0B0; margin-bottom: 0.4rem; display: flex; align-items: flex-start; gap: 0.5rem; line-height: 1.4; }

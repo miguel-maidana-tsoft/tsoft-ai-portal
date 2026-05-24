@@ -43,8 +43,9 @@ body::before {
   display: flex; align-items: center;
 }
 .quiz-header-inner {
-  max-width: 580px; margin: 0 auto; width: 100%;
+  max-width: 860px; margin: 0 auto; width: 100%;
   display: flex; align-items: center; justify-content: space-between;
+  gap: 1.5rem;
 }
 .header-logo {
   font-family: 'Syne', sans-serif;
@@ -56,9 +57,17 @@ body::before {
 .header-badge {
   font-size: 0.62rem; font-weight: 500;
   color: var(--qmuted); letter-spacing: 2px; text-transform: uppercase;
+  white-space: nowrap;
+}
+.header-tag {
+  font-size: 0.62rem; font-weight: 600;
+  color: var(--qred); letter-spacing: 1.5px; text-transform: uppercase;
+  border: 1px solid rgba(200,16,46,0.35);
+  padding: 3px 8px; border-radius: 4px;
+  text-align: right; white-space: nowrap;
 }
 .progress-label {
-  font-size: 0.72rem; color: var(--qmuted);
+  font-size: 0.72rem; color: var(--qmuted); white-space: nowrap;
 }
 .progress-bar-wrap {
   width: 120px; height: 3px;

@@ -58,7 +58,7 @@ export default function AssessmentApp() {
     : null
 
   const progress = screen === 'block'
-    ? { label: `Bloque ${blockIdx + 1} / ${TOTAL_BLOCKS}`, pct: blockIdx / TOTAL_BLOCKS }
+    ? { label: `${blockIdx + 1} / ${TOTAL_BLOCKS}`, pct: blockIdx / TOTAL_BLOCKS }
     : screen === 'results'
     ? { label: '✓ Completado', pct: 1 }
     : null
@@ -77,7 +77,7 @@ export default function AssessmentApp() {
                 <div className="as-progress-bar-fill" style={{ width: `${progress.pct * 100}%` }} />
               </div>
             </div>
-          ) : <div />}
+          ) : <div className="as-header-tag">AGENTES IA</div>}
         </div>
       </header>
 

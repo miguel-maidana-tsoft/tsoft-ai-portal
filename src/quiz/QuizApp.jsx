@@ -56,8 +56,7 @@ export default function QuizApp() {
               </div>
             </div>
           ) : (
-            // En cover/register/phase2 mostramos solo el badge sin barra
-            <div />
+            <div className="header-tag">AGENTES IA</div>
           )}
         </div>
       </header>

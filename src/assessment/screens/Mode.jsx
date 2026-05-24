@@ -35,14 +35,14 @@ function IconLider() {
 export default function Mode({ onColaborador, onLider }) {
   return (
     <div className="as-screen">
-      <div className="as-screen-label">Test de Nivelación IA · 2026</div>
-      <h1 className="as-h1" style={{ fontSize: 'clamp(1.6rem, 2.8vw, 2rem)', lineHeight: 1.35 }}>
-        ¿Cómo querés<br />ingresar?
+      <div className="as-screen-label">AI Adoption Program · 2026</div>
+      <h1 className="as-h1">
+        Test de Nivelación IA
       </h1>
       <div className="as-red-line" />
       <p className="as-subtitle">
-        Seleccioná tu rol para continuar.<br />
-        Argentina · Uso interno · ~10 minutos
+        Medimos tu nivel actual de adopción de IA para guiar tu desarrollo.<br />
+        Seleccioná tu rol para comenzar · ~10 minutos
       </p>
 
       <div className="as-mode-grid">

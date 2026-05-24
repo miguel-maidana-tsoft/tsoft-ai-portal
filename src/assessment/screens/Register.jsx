@@ -19,7 +19,7 @@ export default function Register({ onSubmit }) {
   return (
     <div className="as-screen">
       <div className="as-screen-label">Datos del colaborador</div>
-      <h1 className="as-h1">Antes de arrancar,<br />contanos sobre vos</h1>
+      <h1 className="as-h1" style={{ fontSize: 'clamp(1.5rem, 2.8vw, 2rem)' }}>Antes de arrancar,<br />contanos sobre vos</h1>
       <div className="as-red-line" />
       <p className="as-subtitle">Esta info le llega al líder junto con tu resultado.</p>
 
