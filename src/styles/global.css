@@ -1006,6 +1006,7 @@
 .tt-estado-select--pendiente   { background: #F1F5F9; color: #64748B; }
 .tt-estado-select--en-curso    { background: #FEF3C7; color: #D97706; }
 .tt-estado-select--finalizado  { background: #DCFCE7; color: #15803D; }
+.tt-estado-select--completado  { background: #DCFCE7; color: #15803D; }
 .tt-estado-select--bloqueado   { background: #FEE2E2; color: #DC2626; }
 
 .tt-body {
@@ -3002,9 +3003,22 @@
   opacity: 1;
 }
 
+.tg-row--completado {
+  background: #F0FDF4;
+}
+.tg-row--completado:hover {
+  background: #E8FAF0;
+}
 .tg-row--completado .tg-texto {
-  text-decoration: line-through;
-  opacity: 0.5;
+  color: #15803D;
+  opacity: 0.8;
+}
+.tg-row--completado .tg-descripcion {
+  opacity: 0.55;
+}
+.tg-fecha--completado {
+  color: #15803D;
+  font-weight: 500;
 }
 
 .tg-body {
@@ -3032,10 +3046,16 @@
   gap: 5px;
   flex-shrink: 0;
 }
+.tg-fechas {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-right: 6px;
+}
 .tg-fecha {
   font-size: 11px;
   color: var(--muted);
-  margin-right: 6px;
   white-space: nowrap;
 }
 

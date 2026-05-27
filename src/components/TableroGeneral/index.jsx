@@ -95,11 +95,18 @@ function TareaRow({ tarea, onEstado, onActualizar, onEliminar, dragHandlers, isD
         {tarea.descripcion && <div className="tg-descripcion">{tarea.descripcion}</div>}
       </div>
       <div className="tg-actions">
-        {tarea.fecha_creacion && (
-          <span className="tg-fecha">
-            {new Date(tarea.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </span>
-        )}
+        <div className="tg-fechas">
+          {tarea.fecha_creacion && (
+            <span className="tg-fecha">
+              Creado: {new Date(tarea.fecha_creacion).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </span>
+          )}
+          {tarea.estado === 'Completado' && tarea.fecha_completado && (
+            <span className="tg-fecha tg-fecha--completado">
+              ✓ {new Date(tarea.fecha_completado).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </span>
+          )}
+        </div>
         <button className="tt-btn-icon" onClick={handleOpen} title="Editar">✎</button>
         <button className="tt-btn-icon tt-btn-del" onClick={() => onEliminar(tarea.id)} title="Eliminar">×</button>
       </div>
@@ -150,6 +157,23 @@ export default function TableroGeneral() {
   const [addOpen, setAddOpen] = useState(false)
   const [dragOverId, setDragOverId] = useState(null)
   const dragId = useRef(null)
+
+  function handleEstado(id, estado) {
+    // Calcula el nuevo orden ANTES de que React actualice el estado
+    const newOrder = estado === 'Completado'
+      ? [...(tareasGenerales || []).filter((t) => t.id !== id).map((t) => t.id), id]
+      : null
+
+    // 1. Guarda el nuevo estado
+    actualizarTareaGeneral(id, 'estado', estado)
+
+    if (estado === 'Completado') {
+      // 2. Guarda la fecha de completado
+      actualizarTareaGeneral(id, 'fecha_completado', new Date().toISOString())
+      // 3. Mueve al fondo y persiste el orden (igual que drag-and-drop)
+      reordenarTareasGenerales(newOrder)
+    }
+  }
 
   function handleDragStart(id) { dragId.current = id }
   function handleDragOver(e, id) { e.preventDefault(); if (dragId.current !== id) setDragOverId(id) }
@@ -216,7 +240,7 @@ export default function TableroGeneral() {
               <TareaRow
                 key={t.id}
                 tarea={t}
-                onEstado={(id, estado) => actualizarTareaGeneral(id, 'estado', estado)}
+                onEstado={handleEstado}
                 onActualizar={actualizarTareaGeneral}
                 onEliminar={eliminarTareaGeneral}
                 isDragOver={dragOverId === t.id}
