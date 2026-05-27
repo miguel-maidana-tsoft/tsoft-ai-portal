@@ -1,15 +1,319 @@
 import { useEffect, useRef, useState } from 'react'
+import * as XLSX from 'xlsx'          // upload/parsing
 import { useApp } from '../../context/AppContext'
 import Spinner from '../Spinner'
 
-
 const ESTADOS = ['Pendiente', 'En curso', 'Bloqueado', 'Completado']
+const VALID_ESTADOS = new Set(ESTADOS)
 
 const ESTADO_SLUG = {
   'Pendiente':  'pendiente',
   'En curso':   'en-curso',
   'Bloqueado':  'bloqueado',
   'Completado': 'completado',
+}
+
+// ── Excel helpers ─────────────────────────────────────────────
+const SHEET_NAME = 'Tablero_General_PM'
+const COL = {
+  id:               'id (no modificar)',
+  texto:            'Título',
+  descripcion:      'Descripción',
+  estado:           'Estado',
+  fecha_creacion:   'Fecha creación',
+  fecha_completado: 'Fecha completado',
+}
+
+function formatFecha(iso) {
+  if (!iso) return ''
+  try { return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
+  catch { return '' }
+}
+
+const ESTADO_FILL = {
+  'Completado': { argb: 'FFD1FAE5' },
+  'En curso':   { argb: 'FFFEF3C7' },
+  'Bloqueado':  { argb: 'FFFEE2E2' },
+  'Pendiente':  { argb: 'FFF8FAFC' },
+}
+const ESTADO_FONT = {
+  'Completado': { argb: 'FF15803D' },
+  'En curso':   { argb: 'FFD97706' },
+  'Bloqueado':  { argb: 'FFDC2626' },
+  'Pendiente':  { argb: 'FF64748B' },
+}
+
+async function downloadExcel(tareas) {
+  // Carga ExcelJS solo cuando se necesita (no infla el bundle inicial)
+  const { default: ExcelJS } = await import('exceljs')
+
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'TSOFT AI Portal'
+
+  const ws = workbook.addWorksheet(SHEET_NAME, {
+    views: [{ state: 'frozen', ySplit: 1 }],  // header siempre visible
+  })
+
+  ws.columns = [
+    { header: COL.id,               key: 'id',               width: 38 },
+    { header: COL.texto,            key: 'texto',            width: 52 },
+    { header: COL.descripcion,      key: 'descripcion',      width: 62 },
+    { header: COL.estado,           key: 'estado',           width: 16 },
+    { header: COL.fecha_creacion,   key: 'fecha_creacion',   width: 20 },
+    { header: COL.fecha_completado, key: 'fecha_completado', width: 20 },
+  ]
+
+  // ── Header row ────────────────────────────────────────────
+  const headerRow = ws.getRow(1)
+  headerRow.height = 26
+  headerRow.eachCell((cell) => {
+    cell.fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D1B3E' } }
+    cell.font   = { bold: true, color: { argb: 'FFFFFFFF' }, size: 10, name: 'Calibri' }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.border = { bottom: { style: 'medium', color: { argb: 'FFC8102E' } } }
+  })
+
+  // ── Filas de datos ────────────────────────────────────────
+  tareas.forEach((t, i) => {
+    const row = ws.addRow({
+      id:               t.id,
+      texto:            t.texto,
+      descripcion:      t.descripcion || '',
+      estado:           t.estado,
+      fecha_creacion:   formatFecha(t.fecha_creacion),
+      fecha_completado: formatFecha(t.fecha_completado),
+    })
+    row.height = 22
+
+    const bgBase = i % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC'
+    const borderColor = { argb: 'FFE2E8F0' }
+    const thinBorder  = { style: 'thin', color: borderColor }
+
+    row.eachCell({ includeEmpty: true }, (cell, col) => {
+      cell.border = { bottom: thinBorder, right: thinBorder }
+      cell.font   = { size: 10, color: { argb: 'FF1E293B' }, name: 'Calibri' }
+      cell.alignment = { vertical: 'middle' }
+
+      // Col 1: id → gris claro + cursiva (indica "no tocar")
+      if (col === 1) {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }
+        cell.font = { size: 9, color: { argb: 'FF94A3B8' }, italic: true, name: 'Calibri' }
+        return
+      }
+
+      // Col 3: descripcion → wrap text
+      if (col === 3) {
+        cell.alignment = { vertical: 'top', wrapText: true }
+      }
+
+      // Col 4: estado → color-coded
+      if (col === 4) {
+        const fill = ESTADO_FILL[t.estado]
+        const fc   = ESTADO_FONT[t.estado]
+        if (fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: fill }
+        if (fc)   cell.font = { size: 10, bold: true, color: fc, name: 'Calibri' }
+        cell.alignment = { horizontal: 'center', vertical: 'middle' }
+        return
+      }
+
+      // Col 6: fecha_completado → verde cuando tiene valor
+      if (col === 6 && t.fecha_completado) {
+        cell.font = { size: 10, bold: true, color: { argb: 'FF15803D' }, name: 'Calibri' }
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } }
+        return
+      }
+
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgBase } }
+    })
+  })
+
+  // ── Descarga en el browser ────────────────────────────────
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${SHEET_NAME}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+async function parseExcel(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' })
+        const ws = wb.Sheets[SHEET_NAME]
+        if (!ws) {
+          reject(new Error(`No se encontró la solapa "${SHEET_NAME}" en el archivo.`))
+          return
+        }
+        resolve(XLSX.utils.sheet_to_json(ws, { defval: '' }))
+      } catch (err) { reject(err) }
+    }
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo.'))
+    reader.readAsArrayBuffer(file)
+  })
+}
+
+const CAMPO_LABEL = {
+  texto:       'título',
+  descripcion: 'descripción',
+  estado:      'estado',
+}
+
+function truncar(str, max = 48) {
+  if (!str) return '(vacío)'
+  return str.length > max ? str.slice(0, max) + '…' : str
+}
+
+// Normaliza texto para comparar: trim + saltos de línea unificados
+function norm(str) {
+  return (str || '').trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
+function computeDiff(rows, tareas) {
+  const idMap = Object.fromEntries((tareas || []).map((t) => [t.id, t]))
+  const updates = []  // { id, titulo, cambios: [{campo, label, de, a, valor}] }
+  const nuevas  = []  // { texto, descripcion, estado }
+  const errores = []
+
+  for (const row of rows) {
+    const id          = String(row[COL.id]         || '').trim()
+    const texto       = String(row[COL.texto]       || '').trim()
+    const descripcion = String(row[COL.descripcion] || '').trim()
+    const estado      = String(row[COL.estado]      || '').trim()
+
+    if (!texto) continue
+
+    if (estado && !VALID_ESTADOS.has(estado)) {
+      errores.push(`Estado inválido "${estado}" en tarea "${texto}". Válidos: ${ESTADOS.join(', ')}.`)
+      continue
+    }
+
+    if (id && idMap[id]) {
+      const t = idMap[id]
+      const cambios = []
+
+      if (norm(texto) !== norm(t.texto))
+        cambios.push({ campo: 'texto',       label: 'título',      de: truncar(t.texto),             a: truncar(texto),       valor: texto })
+      if (norm(descripcion) !== norm(t.descripcion))
+        cambios.push({ campo: 'descripcion', label: 'descripción', de: truncar(t.descripcion || ''), a: truncar(descripcion), valor: descripcion })
+      if (estado && estado !== t.estado)
+        cambios.push({ campo: 'estado',      label: 'estado',      de: t.estado,                     a: estado,               valor: estado })
+
+      if (cambios.length) updates.push({ id, titulo: t.texto, cambios })
+    } else if (!id) {
+      nuevas.push({ texto, descripcion, estado: VALID_ESTADOS.has(estado) ? estado : 'Pendiente' })
+    }
+  }
+
+  return { updates, nuevas, errores }
+}
+
+// ── Modal de importación ──────────────────────────────────────
+function ImportModal({ diff, onConfirm, onCancel, applying }) {
+  const { updates, nuevas, errores } = diff
+  const totalCambios = updates.length + nuevas.length
+
+  return (
+    <div className="tg-modal-overlay">
+      <div className="tg-modal">
+        <div className="tg-modal-header">
+          <span className="tg-modal-title">Revisar cambios del Excel</span>
+          {totalCambios > 0 && (
+            <div className="tg-modal-badges">
+              {updates.length > 0 && (
+                <span className="tg-modal-badge tg-modal-badge--update">
+                  {updates.length} actualización{updates.length > 1 ? 'es' : ''}
+                </span>
+              )}
+              {nuevas.length > 0 && (
+                <span className="tg-modal-badge tg-modal-badge--new">
+                  {nuevas.length} nueva{nuevas.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {errores.length > 0 && (
+          <div className="tg-modal-errors">
+            <strong>⚠ Filas ignoradas por error:</strong>
+            <ul>{errores.map((e, i) => <li key={i}>{e}</li>)}</ul>
+          </div>
+        )}
+
+        {totalCambios === 0 ? (
+          <p className="tg-modal-empty">No se detectaron cambios respecto al estado actual.</p>
+        ) : (
+          <ul className="tg-modal-list">
+            {/* Tareas actualizadas — con detalle por campo */}
+            {updates.map(({ id, titulo, cambios }) => (
+              <li key={id} className="tg-modal-item tg-modal-item--update">
+                <div className="tg-modal-item-header">
+                  <span className="tg-modal-item-tag tg-modal-item-tag--update">Modificada</span>
+                  <span className="tg-modal-item-titulo">"{titulo}"</span>
+                </div>
+                <ul className="tg-modal-cambios">
+                  {cambios.map((c, i) => (
+                    <li key={i} className="tg-modal-cambio">
+                      <span className="tg-modal-cambio-campo">{c.label}:</span>
+                      {c.campo === 'estado' ? (
+                        <>
+                          <span className={`tg-modal-estado tg-modal-estado--${(c.de || '').toLowerCase().replace(' ', '-')}`}>{c.de}</span>
+                          <span className="tg-modal-arrow">→</span>
+                          <span className={`tg-modal-estado tg-modal-estado--${(c.a || '').toLowerCase().replace(' ', '-')}`}>{c.a}</span>
+                        </>
+                      ) : (
+                        <span className="tg-modal-cambio-valor">"{c.de}" → "{c.a}"</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+
+            {/* Tareas nuevas */}
+            {nuevas.map(({ texto, estado }, i) => (
+              <li key={`new-${i}`} className="tg-modal-item tg-modal-item--new">
+                <div className="tg-modal-item-header">
+                  <span className="tg-modal-item-tag tg-modal-item-tag--new">Nueva tarea</span>
+                  <span className="tg-modal-item-titulo">"{texto}"</span>
+                </div>
+                {estado && estado !== 'Pendiente' && (
+                  <ul className="tg-modal-cambios">
+                    <li className="tg-modal-cambio">
+                      <span className="tg-modal-cambio-campo">estado:</span>
+                      <span className={`tg-modal-estado tg-modal-estado--${(estado || '').toLowerCase().replace(' ', '-')}`}>{estado}</span>
+                    </li>
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="tg-modal-footer">
+          <button className="tt-btn-cancel" onClick={onCancel} disabled={applying}>
+            Cancelar
+          </button>
+          {totalCambios > 0 && (
+            <button className="tt-btn-save" onClick={onConfirm} disabled={applying}>
+              {applying
+                ? <><span className="tarea-spinner btn-spinner" /> Aplicando...</>
+                : `Confirmar ${totalCambios} cambio${totalCambios > 1 ? 's' : ''}`}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── Fila de tarea ────────────────────────────────────────────
@@ -30,7 +334,7 @@ function TareaRow({ tarea, onEstado, onActualizar, onEliminar, dragHandlers, isD
     if (!form.texto.trim()) return
     setSaving(true)
     const cambios = [
-      form.texto !== tarea.texto       && onActualizar(tarea.id, 'texto',       form.texto.trim()),
+      form.texto !== tarea.texto            && onActualizar(tarea.id, 'texto',       form.texto.trim()),
       form.descripcion !== tarea.descripcion && onActualizar(tarea.id, 'descripcion', form.descripcion),
     ].filter(Boolean)
     await Promise.all(cambios)
@@ -72,9 +376,9 @@ function TareaRow({ tarea, onEstado, onActualizar, onEliminar, dragHandlers, isD
       className={[
         'tg-row',
         `tg-row--${slug}`,
-        tarea._saving ? 'tg-row--saving'    : '',
-        isDragOver    ? 'tg-row--drag-over' : '',
-        isDragging    ? 'tg-row--dragging'  : '',
+        tarea._saving  ? 'tg-row--saving'    : '',
+        isDragOver     ? 'tg-row--drag-over' : '',
+        isDragging     ? 'tg-row--dragging'  : '',
       ].filter(Boolean).join(' ')}
       draggable
       onDragStart={dragHandlers.onDragStart}
@@ -153,28 +457,33 @@ function AddForm({ onAdd, onCancel }) {
 
 // ── Tablero General PM ───────────────────────────────────────
 export default function TableroGeneral() {
-  const { tareasGenerales, loadTareasGenerales, agregarTareaGeneral, actualizarTareaGeneral, eliminarTareaGeneral, reordenarTareasGenerales } = useApp()
-  const [addOpen, setAddOpen] = useState(false)
-  const [dragOverId, setDragOverId] = useState(null)
-  const dragId = useRef(null)
+  const {
+    tareasGenerales, loadTareasGenerales,
+    agregarTareaGeneral, actualizarTareaGeneral,
+    eliminarTareaGeneral, reordenarTareasGenerales,
+  } = useApp()
 
+  const [addOpen,        setAddOpen]        = useState(false)
+  const [dragOverId,     setDragOverId]     = useState(null)
+  const [importDiff,     setImportDiff]     = useState(null)
+  const [importApplying, setImportApplying] = useState(false)
+  const [importError,    setImportError]    = useState(null)
+  const dragId      = useRef(null)
+  const fileInputRef = useRef(null)
+
+  // ── Estado de tareas ──────────────────────
   function handleEstado(id, estado) {
-    // Calcula el nuevo orden ANTES de que React actualice el estado
     const newOrder = estado === 'Completado'
       ? [...(tareasGenerales || []).filter((t) => t.id !== id).map((t) => t.id), id]
       : null
-
-    // 1. Guarda el nuevo estado
     actualizarTareaGeneral(id, 'estado', estado)
-
     if (estado === 'Completado') {
-      // 2. Guarda la fecha de completado
       actualizarTareaGeneral(id, 'fecha_completado', new Date().toISOString())
-      // 3. Mueve al fondo y persiste el orden (igual que drag-and-drop)
       reordenarTareasGenerales(newOrder)
     }
   }
 
+  // ── Drag & drop ───────────────────────────
   function handleDragStart(id) { dragId.current = id }
   function handleDragOver(e, id) { e.preventDefault(); if (dragId.current !== id) setDragOverId(id) }
   function handleDrop(e, targetId) {
@@ -192,6 +501,62 @@ export default function TableroGeneral() {
   }
   function handleDragEnd() { dragId.current = null; setDragOverId(null) }
 
+  // ── Excel: descarga ───────────────────────
+  const [downloading, setDownloading] = useState(false)
+  async function handleDownload() {
+    setDownloading(true)
+    try { await downloadExcel(tareasGenerales || []) }
+    finally { setDownloading(false) }
+  }
+
+  // ── Excel: subida ─────────────────────────
+  async function handleFileChange(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    e.target.value = ''
+    setImportError(null)
+    try {
+      const rows = await parseExcel(file)
+      const diff = computeDiff(rows, tareasGenerales)
+      setImportDiff(diff)
+    } catch (err) {
+      setImportError(err.message)
+    }
+  }
+
+  async function handleImportConfirm() {
+    if (!importDiff) return
+    setImportApplying(true)
+    const { updates, nuevas } = importDiff
+
+    for (const { id, cambios } of updates) {
+      for (const { campo, valor } of cambios) {
+        await actualizarTareaGeneral(id, campo, valor)
+        if (campo === 'estado' && valor === 'Completado') {
+          await actualizarTareaGeneral(id, 'fecha_completado', new Date().toISOString())
+          const current = tareasGenerales || []
+          const newOrder = [...current.filter((t) => t.id !== id).map((t) => t.id), id]
+          reordenarTareasGenerales(newOrder)
+        }
+      }
+    }
+
+    for (const { texto, descripcion, estado } of nuevas) {
+      const result = await agregarTareaGeneral(texto, descripcion)
+      if (result?.success) {
+        if (estado && estado !== 'Pendiente') {
+          await actualizarTareaGeneral(result.id, 'estado', estado)
+        }
+        // Mover al principio de la lista (y persistir orden)
+        const currentIds = (tareasGenerales || []).map((t) => t.id).filter((id) => id !== result.id)
+        reordenarTareasGenerales([result.id, ...currentIds])
+      }
+    }
+
+    setImportApplying(false)
+    setImportDiff(null)
+  }
+
   useEffect(() => {
     if (tareasGenerales === null) loadTareasGenerales()
   }, [])
@@ -207,10 +572,50 @@ export default function TableroGeneral() {
           <div className="page-title">Tablero General</div>
           <div className="page-subtitle">Tareas generales del programa · PM</div>
         </div>
-        <button className="tg-nueva-btn" onClick={() => setAddOpen((o) => !o)}>
-          {addOpen ? '− Cancelar' : '+ Nueva tarea'}
-        </button>
+        <div className="tg-header-actions">
+          <button
+            className="tg-excel-btn tg-excel-btn--download"
+            onClick={handleDownload}
+            disabled={!tareasGenerales || tareasGenerales.length === 0 || downloading}
+            title="Descargar como Excel"
+          >
+            {downloading ? '⏳ Generando...' : '⬇ Descargar Excel'}
+          </button>
+          <button
+            className="tg-excel-btn tg-excel-btn--upload"
+            onClick={() => fileInputRef.current?.click()}
+            title="Subir Excel con cambios"
+          >
+            ⬆ Subir Excel
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+          <button className="tg-nueva-btn" onClick={() => setAddOpen((o) => !o)}>
+            {addOpen ? '− Cancelar' : '+ Nueva tarea'}
+          </button>
+        </div>
       </div>
+
+      {importError && (
+        <div className="tg-import-error">
+          ⚠ {importError}
+          <button onClick={() => setImportError(null)}>×</button>
+        </div>
+      )}
+
+      {importDiff && (
+        <ImportModal
+          diff={importDiff}
+          onConfirm={handleImportConfirm}
+          onCancel={() => setImportDiff(null)}
+          applying={importApplying}
+        />
+      )}
 
       {tareasGenerales !== null && tareasGenerales.length > 0 && (
         <div className="tg-kpis">

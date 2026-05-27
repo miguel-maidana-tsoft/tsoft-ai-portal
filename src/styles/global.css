@@ -2903,6 +2903,13 @@
 /* ══════════════════════════════════════════
    TABLERO GENERAL PM
 ══════════════════════════════════════════ */
+.tg-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .tg-nueva-btn {
   padding: 9px 18px;
   background: var(--navy);
@@ -2915,9 +2922,206 @@
   cursor: pointer;
   transition: opacity 0.15s;
   white-space: nowrap;
-  align-self: flex-start;
 }
 .tg-nueva-btn:hover { opacity: 0.85; }
+
+/* ── Botones Excel ── */
+.tg-excel-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+}
+.tg-excel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.tg-excel-btn--download {
+  background: #F0FDF4;
+  color: #15803D;
+  border-color: #86EFAC;
+}
+.tg-excel-btn--download:hover:not(:disabled) { background: #DCFCE7; }
+.tg-excel-btn--upload {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #93C5FD;
+}
+.tg-excel-btn--upload:hover { background: #DBEAFE; }
+
+/* ── Error de importación ── */
+.tg-import-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.tg-import-error button {
+  background: none; border: none; color: #DC2626;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+}
+
+/* ── Modal de importación ── */
+.tg-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.tg-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tg-modal-header {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tg-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.tg-modal-badges {
+  display: flex;
+  gap: 6px;
+}
+.tg-modal-errors {
+  background: #FEF9C3;
+  border-bottom: 1px solid #FDE68A;
+  padding: 10px 20px;
+  font-size: 12px;
+  color: #92400E;
+}
+.tg-modal-errors ul { margin: 4px 0 0 16px; }
+.tg-modal-empty {
+  padding: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.tg-modal-summary {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px 10px;
+  flex-wrap: wrap;
+}
+.tg-modal-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.tg-modal-badge--update { background: #FEF3C7; color: #D97706; }
+.tg-modal-badge--new    { background: #DCFCE7; color: #15803D; }
+.tg-modal-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.tg-modal-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tg-modal-item:last-child { border-bottom: none; }
+.tg-modal-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tg-modal-item-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.tg-modal-item-tag--update { background: #FEF3C7; color: #D97706; }
+.tg-modal-item-tag--new    { background: #DCFCE7; color: #15803D; }
+.tg-modal-item-titulo {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Detalle de cambios por campo */
+.tg-modal-cambios {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 4px;
+}
+.tg-modal-cambio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.tg-modal-cambio-campo {
+  font-weight: 600;
+  color: var(--body);
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+.tg-modal-cambio-valor {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tg-modal-arrow { color: var(--muted); flex-shrink: 0; }
+
+/* Pills de estado en el modal */
+.tg-modal-estado {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+.tg-modal-estado--completado { background: #DCFCE7; color: #15803D; }
+.tg-modal-estado--en-curso   { background: #FEF3C7; color: #D97706; }
+.tg-modal-estado--bloqueado  { background: #FEE2E2; color: #DC2626; }
+.tg-modal-estado--pendiente  { background: #F1F5F9; color: #64748B; }
+.tg-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
 
 .tg-kpis {
   display: flex;
