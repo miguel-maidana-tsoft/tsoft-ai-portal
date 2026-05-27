@@ -25,7 +25,7 @@ export function AppProvider({ children }) {
   const [resumen, setResumen] = useState({})
   const [clientesInfo, setClientesInfo] = useState({})
   const [assessment, setAssessment] = useState(null)
-  const [tablero, setTablero] = useState(null)
+  const [tableros, setTableros] = useState({})
   const [checklist, setChecklist] = useState({})
   const [view, setView] = useState(_nav.view || 'dashboard')
 
@@ -114,46 +114,59 @@ export function AppProvider({ children }) {
     setAssessment(Array.isArray(data) ? data : [])
   }, [call])
 
-  // ── Tablero General ───────────────────────────────────────
-  const loadTablero = useCallback(async () => {
-    const data = await call({ action: 'getTablero', tableroId: 'General' })
-    setTablero(Array.isArray(data) ? data : [])
+  // ── Tablero por ola (keyed por tableroId) ─────────────────
+  const loadTablero = useCallback(async (tableroId = 'General') => {
+    const data = await call({ action: 'getTablero', tableroId })
+    setTableros((prev) => ({ ...prev, [tableroId]: Array.isArray(data) ? data : [] }))
   }, [call])
 
-  const agregarTableroTarea = useCallback(async (bloque, texto, detalle, semana, responsable) => {
+  const agregarTableroTarea = useCallback(async (tableroId = 'General', bloque, texto, detalle, semana, responsable) => {
     const tempId = 'temp_' + Date.now()
-    setTablero((prev) => [
-      ...(prev || []),
-      { id: tempId, tableroId: 'General', bloque, texto, detalle: detalle || '', semana: semana || '',
-        responsable: responsable || '', estado: 'Pendiente', notas: '', orden: 999999, _saving: true },
-    ])
-    const result = await call({ action: 'agregarTableroTarea', tableroId: 'General', bloque, texto, detalle, semana, responsable })
+    setTableros((prev) => ({
+      ...prev,
+      [tableroId]: [...(prev[tableroId] || []),
+        { id: tempId, tableroId, bloque, texto, detalle: detalle || '', semana: semana || '',
+          responsable: responsable || '', estado: 'Pendiente', notas: '', orden: 999999, _saving: true }],
+    }))
+    const result = await call({ action: 'agregarTableroTarea', tableroId, bloque, texto, detalle, semana, responsable })
     if (result.success) {
-      setTablero((prev) => prev.map((t) => t.id === tempId ? { ...t, id: result.id, _saving: false } : t))
+      setTableros((prev) => ({
+        ...prev,
+        [tableroId]: (prev[tableroId] || []).map((t) => t.id === tempId ? { ...t, id: result.id, _saving: false } : t),
+      }))
     } else {
-      setTablero((prev) => prev.filter((t) => t.id !== tempId))
+      setTableros((prev) => ({
+        ...prev,
+        [tableroId]: (prev[tableroId] || []).filter((t) => t.id !== tempId),
+      }))
     }
     return result
   }, [call])
 
-  const actualizarTableroTarea = useCallback(async (id, campo, valor) => {
-    setTablero((prev) => prev.map((t) => t.id === id ? { ...t, [campo]: valor } : t))
-    await call({ action: 'actualizarTableroTarea', tableroId: 'General', id, campo, valor })
+  const actualizarTableroTarea = useCallback(async (tableroId = 'General', id, campo, valor) => {
+    setTableros((prev) => ({
+      ...prev,
+      [tableroId]: (prev[tableroId] || []).map((t) => t.id === id ? { ...t, [campo]: valor } : t),
+    }))
+    await call({ action: 'actualizarTableroTarea', tableroId, id, campo, valor })
   }, [call])
 
-  const eliminarTableroTarea = useCallback(async (id) => {
-    setTablero((prev) => prev.filter((t) => t.id !== id))
-    await call({ action: 'eliminarTableroTarea', tableroId: 'General', id })
+  const eliminarTableroTarea = useCallback(async (tableroId = 'General', id) => {
+    setTableros((prev) => ({
+      ...prev,
+      [tableroId]: (prev[tableroId] || []).filter((t) => t.id !== id),
+    }))
+    await call({ action: 'eliminarTableroTarea', tableroId, id })
   }, [call])
 
-  const reordenarTableroBloque = useCallback(async (bloque, orderedIds) => {
-    setTablero((prev) => {
-      if (!prev) return prev
-      const other = prev.filter((t) => t.bloque !== bloque)
-      const reordered = orderedIds.map((id) => prev.find((t) => t.id === id)).filter(Boolean)
-      return [...other, ...reordered]
+  const reordenarTableroBloque = useCallback(async (tableroId = 'General', bloque, orderedIds) => {
+    setTableros((prev) => {
+      const list = prev[tableroId] || []
+      const other    = list.filter((t) => t.bloque !== bloque)
+      const reordered = orderedIds.map((id) => list.find((t) => t.id === id)).filter(Boolean)
+      return { ...prev, [tableroId]: [...other, ...reordered] }
     })
-    await call({ action: 'reordenarTableroBloque', tableroId: 'General', bloque, orderedIds: orderedIds.join(',') })
+    await call({ action: 'reordenarTableroBloque', tableroId, bloque, orderedIds: orderedIds.join(',') })
   }, [call])
 
   const loadTareasGenerales = useCallback(async () => {
@@ -372,7 +385,7 @@ export function AppProvider({ children }) {
         currentOla, setCurrentOla,
         currentCliente, setCurrentCliente,
         currentFase, setCurrentFase,
-        tareas, resumen, clientesInfo, assessment, tablero,
+        tareas, resumen, clientesInfo, assessment, tableros,
         checklist,
         tareasGenerales,
         plataformaTareas, plataformaSeg,

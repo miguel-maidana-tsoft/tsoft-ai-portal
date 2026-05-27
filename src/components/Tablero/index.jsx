@@ -332,18 +332,19 @@ function BloqueSection({ bloque, tareas, onEstado, onEliminar, onActualizar, onA
 }
 
 // ── Tablero principal ────────────────────────────────────────────
-export default function Tablero({ hideHeader = false }) {
+export default function Tablero({ hideHeader = false, tableroId = 'General' }) {
   const {
-    tablero, loadTablero,
+    tableros, loadTablero,
     agregarTableroTarea, actualizarTableroTarea, eliminarTableroTarea, reordenarTableroBloque,
   } = useApp()
+  const tablero = tableros[tableroId]
   const [addingBloque, setAddingBloque] = useState(false)
   const [nuevoBloque, setNuevoBloque] = useState('')
   const [bloquesNuevos, setBloquesNuevos] = useState([])
 
   useEffect(() => {
-    if (tablero === null) loadTablero()
-  }, [])
+    if (tablero === null || tablero === undefined) loadTablero(tableroId)
+  }, [tableroId])
 
   function handleNuevoBloque(e) {
     e.preventDefault()
@@ -354,7 +355,7 @@ export default function Tablero({ hideHeader = false }) {
     setAddingBloque(false)
   }
 
-  const loading = tablero === null
+  const loading = tablero === null || tablero === undefined
 
   const grupoMap = {}
   ;(tablero || []).forEach((t) => {
@@ -411,13 +412,13 @@ export default function Tablero({ hideHeader = false }) {
               bloque={bloque}
               tareas={grupoMap[bloque] || []}
               defaultOpen={bloquesVacios.includes(bloque)}
-              onEstado={(id, estado) => actualizarTableroTarea(id, 'estado', estado)}
-              onEliminar={eliminarTableroTarea}
-              onActualizar={actualizarTableroTarea}
-              onReordenar={reordenarTableroBloque}
+              onEstado={(id, estado) => actualizarTableroTarea(tableroId, id, 'estado', estado)}
+              onEliminar={(id) => eliminarTableroTarea(tableroId, id)}
+              onActualizar={(id, campo, valor) => actualizarTableroTarea(tableroId, id, campo, valor)}
+              onReordenar={(bloque, ids) => reordenarTableroBloque(tableroId, bloque, ids)}
               onAdd={async (b, texto, detalle, semana, responsable) => {
                 setBloquesNuevos((prev) => prev.filter((x) => x !== b))
-                return agregarTableroTarea(b, texto, detalle, semana, responsable)
+                return agregarTableroTarea(tableroId, b, texto, detalle, semana, responsable)
               }}
             />
           ))}

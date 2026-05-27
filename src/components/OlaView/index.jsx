@@ -14,7 +14,7 @@ export default function OlaView() {
           <div className="page-subtitle">Tablero de seguimiento de la ola</div>
         </div>
       </div>
-      <Tablero hideHeader />
+      <Tablero hideHeader tableroId={ola.tableroId} />
     </div>
   )
 }

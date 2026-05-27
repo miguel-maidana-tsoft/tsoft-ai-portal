@@ -20,8 +20,8 @@ export const CLIENTES_OLA1 = [
 export const CLIENTES_OLA2 = []
 
 export const OLAS = [
-  { id: 'Ola 1', label: 'OLA 1 — Clientes', clientes: CLIENTES_OLA1 },
-  { id: 'Ola 2', label: 'OLA 2 — Clientes', clientes: CLIENTES_OLA2 },
+  { id: 'Ola 1', label: 'OLA 1 — Clientes', clientes: CLIENTES_OLA1, tableroId: 'General' },
+  { id: 'Ola 2', label: 'OLA 2 — Clientes', clientes: CLIENTES_OLA2, tableroId: 'Ola 2' },
 ]
 
 export const ROLES_CHAMPION = [

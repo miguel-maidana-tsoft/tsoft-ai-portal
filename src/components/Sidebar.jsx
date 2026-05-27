@@ -55,7 +55,7 @@ export default function Sidebar({ open, onClose }) {
     logout()
   }
 
-  const showOlas = canAccess('tracker') && OLAS.some((o) => o.clientes.length > 0)
+  const showOlas = canAccess('tracker')
   const showTablero = canAccess('tablero')
   const showTableroGeneral = canAccess('tablero')
   const showPlataforma = canAccess('plataforma')
@@ -88,7 +88,7 @@ export default function Sidebar({ open, onClose }) {
         {showOlas && (
           <>
             <div className="sidebar-separator" />
-            {OLAS.filter((o) => o.clientes.length > 0).map((ola) => {
+            {OLAS.map((ola) => {
               const isCollapsed = !!collapsedOlas[ola.id]
               return (
                 <div className="sidebar-section" key={ola.id}>
