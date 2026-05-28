@@ -177,8 +177,8 @@ export function AppProvider({ children }) {
   const agregarTareaGeneral = useCallback(async (texto, descripcion) => {
     const tempId = 'temp_' + Date.now()
     setTareasGenerales((prev) => [
-      ...(prev || []),
       { id: tempId, texto, descripcion: descripcion || '', estado: 'Pendiente', fecha_creacion: new Date().toISOString(), _saving: true },
+      ...(prev || []),
     ])
     const result = await call({ action: 'agregarTareaGeneral', texto, descripcion })
     if (result.success) {

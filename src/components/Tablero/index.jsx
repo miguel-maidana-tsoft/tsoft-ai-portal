@@ -4,6 +4,8 @@ import { RESPONSABLES_TABLERO } from '../../constants'
 
 const ESTADOS_TABLERO = ['Pendiente', 'En curso', 'Finalizado', 'Bloqueado']
 
+const DETALLE_LIMIT = 120
+
 // ── Fila de tarea ────────────────────────────────────────────────
 function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isDragOver, isDragging }) {
   const [editing, setEditing] = useState(false)
@@ -11,6 +13,7 @@ function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isD
   const [pendingFinalizado, setPendingFinalizado] = useState(false)
   const [notaCierre, setNotaCierre] = useState('')
   const [savingCierre, setSavingCierre] = useState(false)
+  const [detalleExpanded, setDetalleExpanded] = useState(false)
 
   function handleEstadoChange(e) {
     const nuevo = e.target.value
@@ -137,7 +140,21 @@ function TareaRow({ tarea, onEstado, onEliminar, onActualizar, dragHandlers, isD
       </select>
       <div className="tt-body">
         <div className="tt-texto">{tarea.texto}</div>
-        {tarea.detalle && <div className="tt-detalle">{tarea.detalle}</div>}
+        {tarea.detalle && (
+          <div className="tt-detalle">
+            {detalleExpanded || tarea.detalle.length <= DETALLE_LIMIT
+              ? tarea.detalle
+              : tarea.detalle.slice(0, DETALLE_LIMIT) + '…'}
+            {tarea.detalle.length > DETALLE_LIMIT && (
+              <button
+                className="tt-detalle-toggle"
+                onClick={(e) => { e.stopPropagation(); setDetalleExpanded((v) => !v) }}
+              >
+                {detalleExpanded ? 'ver menos' : 'ver más'}
+              </button>
+            )}
+          </div>
+        )}
         {tarea.notas && <div className="tt-notas">{tarea.notas}</div>}
         {pendingFinalizado && (
           <div className="tt-cierre-form">

@@ -424,10 +424,10 @@ function AddForm({ onAdd, onCancel }) {
   const inputRef = useRef(null)
   useEffect(() => { inputRef.current?.focus() }, [])
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.texto.trim()) return
-    onAdd(form.texto.trim(), form.descripcion.trim())
+    await onAdd(form.texto.trim(), form.descripcion.trim())
     onCancel()
   }
 
@@ -464,12 +464,25 @@ export default function TableroGeneral() {
   } = useApp()
 
   const [addOpen,        setAddOpen]        = useState(false)
+  const [filtro,         setFiltro]         = useState('todos')
   const [dragOverId,     setDragOverId]     = useState(null)
   const [importDiff,     setImportDiff]     = useState(null)
   const [importApplying, setImportApplying] = useState(false)
   const [importError,    setImportError]    = useState(null)
   const dragId      = useRef(null)
   const fileInputRef = useRef(null)
+
+  async function handleAgregar(texto, descripcion) {
+    const result = await agregarTareaGeneral(texto, descripcion)
+    if (result?.success) {
+      const currentIds = (tareasGenerales || []).map((t) => t.id).filter((id) => id !== result.id)
+      reordenarTareasGenerales([result.id, ...currentIds])
+    }
+  }
+
+  function toggleFiltro(estado) {
+    setFiltro((prev) => prev === estado ? 'todos' : estado)
+  }
 
   // ── Estado de tareas ──────────────────────
   function handleEstado(id, estado) {
@@ -563,7 +576,11 @@ export default function TableroGeneral() {
 
   const pendientes  = (tareasGenerales || []).filter((t) => t.estado === 'Pendiente').length
   const enCurso     = (tareasGenerales || []).filter((t) => t.estado === 'En curso').length
+  const bloqueadas  = (tareasGenerales || []).filter((t) => t.estado === 'Bloqueado').length
   const completadas = (tareasGenerales || []).filter((t) => t.estado === 'Completado').length
+  const tareasFiltradas = filtro === 'todos'
+    ? (tareasGenerales || [])
+    : (tareasGenerales || []).filter((t) => t.estado === filtro)
 
   return (
     <div>
@@ -619,16 +636,45 @@ export default function TableroGeneral() {
 
       {tareasGenerales !== null && tareasGenerales.length > 0 && (
         <div className="tg-kpis">
-          <span className="tg-kpi"><span className="tg-kpi-num">{pendientes}</span> Pendientes</span>
-          <span className="tg-kpi tg-kpi--curso"><span className="tg-kpi-num">{enCurso}</span> En curso</span>
-          <span className="tg-kpi tg-kpi--done"><span className="tg-kpi-num">{completadas}</span> Completadas</span>
+          <span
+            className={`tg-kpi tg-kpi--todos ${filtro === 'todos' ? 'tg-kpi--active' : ''}`}
+            onClick={() => setFiltro('todos')}
+          >
+            <span className="tg-kpi-num">{tareasGenerales.length}</span> Todas
+          </span>
+          <span
+            className={`tg-kpi ${filtro === 'Pendiente' ? 'tg-kpi--active' : ''}`}
+            onClick={() => toggleFiltro('Pendiente')}
+          >
+            <span className="tg-kpi-num">{pendientes}</span> Pendientes
+          </span>
+          <span
+            className={`tg-kpi tg-kpi--curso ${filtro === 'En curso' ? 'tg-kpi--active' : ''}`}
+            onClick={() => toggleFiltro('En curso')}
+          >
+            <span className="tg-kpi-num">{enCurso}</span> En curso
+          </span>
+          {bloqueadas > 0 && (
+            <span
+              className={`tg-kpi tg-kpi--bloqueado ${filtro === 'Bloqueado' ? 'tg-kpi--active' : ''}`}
+              onClick={() => toggleFiltro('Bloqueado')}
+            >
+              <span className="tg-kpi-num">{bloqueadas}</span> Bloqueadas
+            </span>
+          )}
+          <span
+            className={`tg-kpi tg-kpi--done ${filtro === 'Completado' ? 'tg-kpi--active' : ''}`}
+            onClick={() => toggleFiltro('Completado')}
+          >
+            <span className="tg-kpi-num">{completadas}</span> Completadas
+          </span>
         </div>
       )}
 
       <div className="tg-wrap">
         {addOpen && (
           <AddForm
-            onAdd={agregarTareaGeneral}
+            onAdd={handleAgregar}
             onCancel={() => setAddOpen(false)}
           />
         )}
@@ -639,9 +685,13 @@ export default function TableroGeneral() {
           <div className="tg-empty">
             Sin tareas todavía. Usá <strong>+ Nueva tarea</strong> para agregar.
           </div>
+        ) : tareasFiltradas.length === 0 ? (
+          <div className="tg-empty">
+            No hay tareas con estado <strong>{filtro}</strong>.
+          </div>
         ) : (
           <div className="tg-list">
-            {tareasGenerales.map((t) => (
+            {tareasFiltradas.map((t) => (
               <TareaRow
                 key={t.id}
                 tarea={t}

@@ -980,9 +980,24 @@
 }
 
 .tt-row--finalizado .tt-texto {
-  text-decoration: line-through;
-  opacity: 0.5;
+  color: #15803D;
+  opacity: 0.85;
 }
+
+.tt-detalle-toggle {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--navy);
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0.6;
+  text-decoration: underline;
+}
+.tt-detalle-toggle:hover { opacity: 1; }
 
 .tt-row--bloqueado .tt-texto {
   opacity: 0.6;
@@ -3131,12 +3146,19 @@
 }
 
 .tg-kpi {
+  cursor: pointer;
   font-size: 12.5px;
   color: var(--muted);
   display: flex;
   align-items: center;
   gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
 }
+
+.tg-kpi:hover { background: var(--bg); }
 
 .tg-kpi-num {
   font-size: 18px;
@@ -3145,8 +3167,14 @@
   line-height: 1;
 }
 
-.tg-kpi--curso .tg-kpi-num { color: var(--yellow); }
-.tg-kpi--done  .tg-kpi-num { color: var(--green);  }
+.tg-kpi--curso    .tg-kpi-num { color: var(--yellow); }
+.tg-kpi--done     .tg-kpi-num { color: var(--green);  }
+.tg-kpi--bloqueado .tg-kpi-num { color: #DC2626; }
+
+.tg-kpi--active                 { border-color: var(--navy); background: var(--bg); }
+.tg-kpi--curso.tg-kpi--active   { border-color: var(--yellow); }
+.tg-kpi--done.tg-kpi--active    { border-color: var(--green); }
+.tg-kpi--bloqueado.tg-kpi--active { border-color: #DC2626; }
 
 .tg-wrap {
   background: var(--white);
