@@ -19,16 +19,17 @@ function EyeOffIcon() {
   )
 }
 
+const FIXED_EMAIL = 'miguel.maidana@tsoftglobal.com'
+
 export default function Login() {
   const { login, loading, errorLabel } = useAuth()
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     if (loading) return
-    await login(email.trim().toLowerCase(), password)
+    await login(FIXED_EMAIL, password)
   }
 
   return (
@@ -40,23 +41,9 @@ export default function Login() {
         </div>
 
         <h1 className="login-title">Iniciar sesión</h1>
-        <p className="login-subtitle">Ingresá con tu cuenta TSOFT</p>
+        <p className="login-subtitle">Ingresá tu contraseña para acceder</p>
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="login-field">
-            <label className="login-label">Email</label>
-            <input
-              type="email"
-              className="login-input"
-              placeholder="nombre@tsoftglobal.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoFocus
-              autoComplete="email"
-            />
-          </div>
-
           <div className="login-field">
             <label className="login-label">Contraseña</label>
             <div className="login-input-wrap">
