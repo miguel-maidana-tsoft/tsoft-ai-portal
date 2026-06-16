@@ -75,7 +75,7 @@ export default function Sidebar({ open, onClose }) {
           >
             <span className="dot" /> Dashboard
           </div>
-          {showTableroGeneral && (
+          {false && showTableroGeneral && (
             <div
               className={`nav-item ${view === 'tablero-general' ? 'active' : ''}`}
               onClick={() => { openTableroGeneral(); onClose?.() }}
@@ -139,7 +139,7 @@ export default function Sidebar({ open, onClose }) {
             <div className="sidebar-separator" />
             <div className="sidebar-section">
               <div className="sidebar-label">Interno TSOFT</div>
-              {showPlataforma && (
+              {false && showPlataforma && (
                 <div
                   className={`nav-item ${view === 'plataforma' ? 'active' : ''}`}
                   onClick={handlePlataformaClick}

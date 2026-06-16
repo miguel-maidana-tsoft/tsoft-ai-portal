@@ -15,6 +15,9 @@ var TABLERO_SHEET_NAMES = {
 const OLA_CONFIG = {
   'Ola 1': {
     clientes: ['Correo Argentino','Tuenti','AM','Claro','Claro Automatización']
+  },
+  'Ola 2': {
+    clientes: ['PAE','PRISMA','PISA','CREDICOOP','EDENOR']
   }
 };
 
@@ -299,7 +302,12 @@ function actualizarClienteInfo(cliente, campo, valor) {
       return { success: true };
     }
   }
-  return { error: 'Cliente no encontrado' };
+  // Cliente no existe aún — crear fila vacía y escribir el valor
+  const newRow = headers.map(function(h) { return h === 'cliente' ? cliente : ''; });
+  sheet.appendRow(newRow);
+  const newRowIdx = sheet.getLastRow();
+  sheet.getRange(newRowIdx, colIdx).setValue(valor);
+  return { success: true };
 }
 
 // ============================================================

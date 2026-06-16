@@ -16,8 +16,13 @@ export const CLIENTES_OLA1 = [
   'Claro Automatización',
 ]
 
-// Agregar clientes de Ola 2 cuando estén definidos
-export const CLIENTES_OLA2 = []
+export const CLIENTES_OLA2 = [
+  'PAE',
+  'PRISMA',
+  'PISA',
+  'CREDICOOP',
+  'EDENOR',
+]
 
 export const OLAS = [
   { id: 'Ola 1', label: 'OLA 1 — Clientes', clientes: CLIENTES_OLA1, tableroId: 'General' },
