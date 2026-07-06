@@ -1,5 +1,5 @@
 import { useApp } from '../../context/AppContext'
-import Checklist from './Checklist'
+import Checklist from './ChecklistV2'
 import InfoCliente from './InfoCliente'
 
 export default function Tracker({ onToast }) {

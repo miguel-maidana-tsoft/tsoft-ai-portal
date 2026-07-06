@@ -301,13 +301,13 @@ export function AppProvider({ children }) {
     setChecklist((prev) => ({ ...prev, [cliente]: Array.isArray(data) ? data : [] }))
   }, [call])
 
-  const agregarChecklistItem = useCallback(async (cliente, texto) => {
+  const agregarChecklistItem = useCallback(async (cliente, texto, fase) => {
     const tempId = 'temp_' + Date.now()
     setChecklist((prev) => ({
       ...prev,
-      [cliente]: [...(prev[cliente] || []), { id: tempId, cliente, texto, completado: false, orden: 999999, _saving: true }],
+      [cliente]: [...(prev[cliente] || []), { id: tempId, cliente, texto, completado: false, orden: 999999, fase, extra: true, _saving: true }],
     }))
-    const result = await call({ action: 'agregarChecklistItemCliente', cliente, texto })
+    const result = await call({ action: 'agregarChecklistItemCliente', cliente, texto, fase })
     if (result.success) {
       setChecklist((prev) => ({
         ...prev,
